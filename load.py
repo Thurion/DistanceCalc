@@ -79,6 +79,11 @@ def plugin_prefs(parent):
 
 def updateUi():
     row = 0
+    if len(this.distances) == 0:
+        # possible bug in tkinter: when everythng is removed from frame it isn't resized. add this instead
+        this.unspecified.grid(row = row, column = 0, sticky=tk.W)
+    else:
+        this.unspecified.grid_remove()
     for (system, distance) in this.distanceLabels:
         if len(this.distances) >= row + 1:
             s = this.distances[row]
@@ -108,7 +113,7 @@ def prefs_changed():
                 d["z"] = float(zText.strip())
                 this.distances.append(d)
             except: # error while parsing the numbers
-                sys.stderr.write("error while parsing the numbers")
+                sys.stderr.write("DistanceCalc: Error while parsing the coordinates for {0}".format(systemText.strip()))
                 continue
     config.set("DistanceCalc", json.dumps(this.distances))
     updateUi()
@@ -117,6 +122,7 @@ def prefs_changed():
 def plugin_app(parent):
     frame = tk.Frame(parent)
     frame.columnconfigure(1, weight=1)
+    this.unspecified = tk.Label(frame, text="No systems specified")
     this.distanceLabels = list()
     for i in range(3):
         this.distanceLabels.append((tk.Label(frame), tk.Label(frame)))
