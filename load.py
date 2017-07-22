@@ -18,7 +18,6 @@ def plugin_start():
     Start this plugin
     :return: Plugin name
     """
-    sys.stderr.write("example plugin started\n")	# appears in %TMP%/EDMarketConnector.log in packaged Windows app
     this.distances = json.loads(config.get("DistanceCalc") or "[]")
     return 'DistanceCalc'
 
