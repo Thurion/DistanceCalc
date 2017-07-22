@@ -102,8 +102,9 @@ def plugin_app(parent):
     this.ditanceLabel = tk.Label(frame, text="0 Ly").grid(row = 0, column = 1, sticky=tk.W)
     return frame
 
-def calculateDistance(x, y, z):
-    return math.sqrt((-78.59375 - x) ** 2 + (-149.625 - y) ** 2 + (-340.53125 - z) ** 2)
+
+def calculateDistance(x1, y1, z1, x2, y2, z2):
+    return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2 + (z1 - z2) ** 2)
 
 
 def journal_entry(cmdr, system, station, entry, state):
@@ -120,6 +121,7 @@ def journal_entry(cmdr, system, station, entry, state):
         # We arrived at a new system!
         if 'StarPos' in entry:
             #sys.stderr.write("Arrived at {} ({},{},{})\n".format(entry['StarSystem'], *tuple(entry['StarPos'])))
-            this.ditanceLabel["text"] = "{0:.2f} Ly".format(calculateDistance(*tuple(entry['StarPos'])))
+            #this.ditanceLabel["text"] = "{0:.2f} Ly".format(calculateDistance(*tuple(entry['StarPos'])))
+            pass
         else:
             this.ditanceLabel["text"] = "? LY"
