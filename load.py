@@ -92,17 +92,3 @@ def journal_entry(cmdr, system, station, entry, state):
             this.ditanceLabel["text"] = "{0:.2f} Ly".format(calculateDistance(*tuple(entry['StarPos'])))
         else:
             this.ditanceLabel["text"] = "? LY"
-
-
-def cmdr_data(data):
-    """
-    Obtained new data from Frontier about our commander, location and ships
-    :param data:
-    :return:
-    """
-    cmdr_data.last = data
-    plugin_app.status['text'] = "Got new data ({} chars)".format(len(str(data)))
-    sys.stderr.write("Got new data ({} chars)\n".format(len(str(data))))
-
-cmdr_data.last = None
-
