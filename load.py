@@ -32,14 +32,12 @@ def plugin_prefs(parent):
     frameBottom = nb.Frame(frame)
     frameBottom.grid(row = 1, column = 0, sticky=tk.W)
 
-    this.settings = list()
-    setting = json.loads(config.get("DistanceCalc") or "[]")
-
     nb.Label(frameTop, text="Systems").grid(row = 0, column = 0, sticky=tk.EW)
     nb.Label(frameTop, text="X").grid(row = 0, column = 1, sticky=tk.EW)
     nb.Label(frameTop, text="Y").grid(row = 0, column = 2, sticky=tk.EW)
     nb.Label(frameTop, text="Z").grid(row = 0, column = 3, sticky=tk.EW)
 
+    this.settingUiEntries = list()
     for i in range(3):
         systemEntry = nb.Entry(frameTop)
         systemEntry.grid(row = i + 1, column = 0, padx = 5, sticky=tk.W)
@@ -49,7 +47,10 @@ def plugin_prefs(parent):
         yEntry.grid(row = i + 1, column = 2, padx = 5, sticky=tk.W)
         zEntry = nb.Entry(frameTop)
         zEntry.grid(row = i + 1, column = 3, padx = 5, sticky=tk.W)
-        this.settings.append([systemEntry, xEntry, yEntry, zEntry])
+        this.settingUiEntries.append([systemEntry, xEntry, yEntry, zEntry])
+
+    nb.Label(frameTop).grid()	# spacer
+    nb.Label(frameBottom, text="You can get coordinates from EDDB or EDSM or enter whatever you like.").grid(row = 4, column = 0, sticky=tk.W)
 
     def fillEntries(s, x, y, z, systemEntry, xEntry, yEntry, zEntry):
         systemEntry.insert(0, s)
@@ -57,22 +58,20 @@ def plugin_prefs(parent):
         yEntry.insert(0, y)
         zEntry.insert(0, z)
 
+    setting = json.loads(config.get("DistanceCalc") or "[]")
     row = 0
     if len(setting) > 0:
         for var in setting:
-            systemEntry, xEntry, yEntry, zEntry = this.settings[row]
+            systemEntry, xEntry, yEntry, zEntry = this.settingUiEntries[row]
             fillEntries(var["system"], var["x"], var["y"], var["z"], systemEntry, xEntry, yEntry, zEntry)
             row += 1
-
-    nb.Label(frameTop).grid()	# spacer
-    nb.Label(frameBottom, text="You can get coordinates from EDDB or EDSM or enter whatever you like.").grid(row = 4, column = 0, sticky=tk.W)
 
     return frame
 
 
 def prefs_changed():
     setting = list()
-    for (system, x, y, z) in this.settings:
+    for (system, x, y, z) in this.settingUiEntries:
         systemText = system.get()
         xText = x.get()
         yText = y.get()
