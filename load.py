@@ -4,6 +4,7 @@ A Skeleton EDMC Plugin
 import sys
 import ttk
 import math
+import json
 import Tkinter as tk
 
 from config import config
@@ -32,11 +33,8 @@ def plugin_prefs(parent):
     frameBottom.grid(row = 1, column = 0, sticky=tk.W)
 
     this.settings = list()
+    setting = json.loads(config.get("DistanceCalc") or "[]")
 
-    frameTop.columnconfigure(0, weight=10)
-    frameTop.columnconfigure(1, weight=1)
-    frameTop.columnconfigure(2, weight=1)
-    frameTop.columnconfigure(3, weight=1)
     nb.Label(frameTop, text="Systems").grid(row = 0, column = 0, sticky=tk.W)
     nb.Label(frameTop, text="X").grid(row = 0, column = 1, sticky=tk.W)
     nb.Label(frameTop, text="Y").grid(row = 0, column = 2, sticky=tk.W)
@@ -51,12 +49,40 @@ def plugin_prefs(parent):
         yEntry.grid(row = i + 1, column = 2, sticky=tk.W)
         zEntry = nb.Entry(frameTop)
         zEntry.grid(row = i + 1, column = 3, sticky=tk.W)
-        this.settings.append((systemEntry, xEntry, yEntry, zEntry))
+        this.settings.append([systemEntry, xEntry, yEntry, zEntry])
+
+    f = lambda s, x, y, z, systemEntry, xEntry, yEntry, zEntry: (systemEntry.insert(0, s), xEntry.insert(0, x), yEntry.insert(0, y), zEntry.insert(0, z))
+    row = 0
+    if len(setting) > 0:
+        for var in setting:
+            systemEntry, xEntry, yEntry, zEntry = this.settings[row]
+            f(var["system"], var["x"], var["y"], var["z"], systemEntry, xEntry, yEntry, zEntry)
+            row += 1
 
     nb.Label(frameTop).grid()	# spacer
     nb.Label(frameBottom, text="You can get coordinates from EDDB or EDSM or enter whatever you like.").grid(row = 4, column = 0, sticky=tk.W)
 
     return frame
+
+def prefs_changed():
+    setting = list()
+    for (system, x, y, z) in this.settings:
+        systemText = system.get()
+        xText = x.get()
+        yText = y.get()
+        zText = z.get()
+        if systemText and xText and yText and zText:
+            try:
+                d = dict()
+                d["z"] = float(zText)
+                d["y"] = float(yText)
+                d["x"] = float(xText)
+                d["system"] = systemText
+                setting.append(d)
+            except: # error while parsing the numbers
+                sys.stderr.write("error while parsing the numbers")
+                continue
+    config.set("DistanceCalc", json.dumps(setting))
 
 
 def plugin_app(parent):
