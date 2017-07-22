@@ -6,7 +6,7 @@ import ttk
 import math
 import Tkinter as tk
 
-from config import applongname, appversion
+from config import config
 import myNotebook as nb
 
 
@@ -26,15 +26,35 @@ def plugin_prefs(parent):
     Return a TK Frame for adding to the EDMC settings dialog.
     """
     frame = nb.Frame(parent)
+    frameTop = nb.Frame(frame)
+    frameTop.grid(row = 0, column = 0, sticky=tk.W)
+    frameBottom = nb.Frame(frame)
+    frameBottom.grid(row = 1, column = 0, sticky=tk.W)
 
-    nb.Label(frame, text="{NAME} {VER}".format(NAME=applongname, VER=appversion)).grid(sticky=tk.W)
-    nb.Label(frame).grid()	# spacer
-    nb.Label(frame, text="Fly Safe!").grid(sticky=tk.W)
-    nb.Label(frame).grid()	# spacer
+    this.settings = list()
 
-    if cmdr_data.last is not None:
-        datalen = len(str(cmdr_data.last))
-        nb.Label(frame, text="FD sent {} chars".format(datalen)).grid(sticky=tk.W)
+    frameTop.columnconfigure(0, weight=10)
+    frameTop.columnconfigure(1, weight=1)
+    frameTop.columnconfigure(2, weight=1)
+    frameTop.columnconfigure(3, weight=1)
+    nb.Label(frameTop, text="Systems").grid(row = 0, column = 0, sticky=tk.W)
+    nb.Label(frameTop, text="X").grid(row = 0, column = 1, sticky=tk.W)
+    nb.Label(frameTop, text="Y").grid(row = 0, column = 2, sticky=tk.W)
+    nb.Label(frameTop, text="Z").grid(row = 0, column = 3, sticky=tk.W)
+
+    for i in range(3):
+        systemEntry = nb.Entry(frameTop)
+        systemEntry.grid(row = i + 1, column = 0, sticky=tk.W)
+        xEntry = nb.Entry(frameTop)
+        xEntry.grid(row = i + 1, column = 1, sticky=tk.W)
+        yEntry = nb.Entry(frameTop)
+        yEntry.grid(row = i + 1, column = 2, sticky=tk.W)
+        zEntry = nb.Entry(frameTop)
+        zEntry.grid(row = i + 1, column = 3, sticky=tk.W)
+        this.settings.append((systemEntry, xEntry, yEntry, zEntry))
+
+    nb.Label(frameTop).grid()	# spacer
+    nb.Label(frameBottom, text="You can get coordinates from EDDB or EDSM or enter whatever you like.").grid(row = 4, column = 0, sticky=tk.W)
 
     return frame
 
