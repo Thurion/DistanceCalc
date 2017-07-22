@@ -30,18 +30,11 @@ import myNotebook as nb
 this = sys.modules[__name__]	# For holding module globals
 
 def plugin_start():
-    """
-    Start this plugin
-    :return: Plugin name
-    """
     this.distances = json.loads(config.get("DistanceCalc") or "[]")
     return 'DistanceCalc'
 
 
 def plugin_prefs(parent):
-    """
-    Return a TK Frame for adding to the EDMC settings dialog.
-    """
     frame = nb.Frame(parent)
     frameTop = nb.Frame(frame)
     frameTop.grid(row = 0, column = 0, sticky=tk.W)
@@ -122,11 +115,6 @@ def prefs_changed():
 
 
 def plugin_app(parent):
-    """
-    Return a TK Widget for the EDMC main window.
-    :param parent:
-    :return:
-    """
     frame = tk.Frame(parent)
     frame.columnconfigure(1, weight=1)
     this.distanceLabels = list()
@@ -151,15 +139,6 @@ def updateDistances(coordinates = None):
 
 
 def journal_entry(cmdr, system, station, entry, state):
-    """
-    E:D client made a journal entry
-    :param cmdr: The Cmdr name, or None if not yet known
-    :param system: The current system, or None if not yet known
-    :param station: The current station, or None if not docked or not yet known
-    :param entry: The journal entry as a dictionary
-    :param state: A dictionary containing info about the Cmdr, current ship and cargo
-    :return:
-    """
     if entry['event'] == 'FSDJump':
         # We arrived at a new system!
         if 'StarPos' in entry:
