@@ -123,6 +123,16 @@ def plugin_app(parent):
 def calculateDistance(x1, y1, z1, x2, y2, z2):
     return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2 + (z1 - z2) ** 2)
 
+def updateDistances(coordinates = None):
+    if not coordinates:
+        for (_, distance) in this.distanceLabels:
+            distance["text"] = "? Ly"
+    else:
+        for i in range(len(this.distances)):
+            system = this.distances[i]
+            distance = calculateDistance(system["x"], system["y"], system["z"], *coordinates)
+            this.distanceLabels[i][1]["text"] = "{0:.2f} Ly".format(distance)
+
 
 def journal_entry(cmdr, system, station, entry, state):
     """
@@ -137,8 +147,6 @@ def journal_entry(cmdr, system, station, entry, state):
     if entry['event'] == 'FSDJump':
         # We arrived at a new system!
         if 'StarPos' in entry:
-            #sys.stderr.write("Arrived at {} ({},{},{})\n".format(entry['StarSystem'], *tuple(entry['StarPos'])))
-            #this.ditanceLabel["text"] = "{0:.2f} Ly".format(calculateDistance(*tuple(entry['StarPos'])))
-            pass
+            updateDistances(tuple(entry['StarPos']))
         else:
-            pass
+            updateDistances()
