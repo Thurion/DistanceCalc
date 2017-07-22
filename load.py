@@ -47,10 +47,8 @@ def plugin_app(parent):
     """
     frame = tk.Frame(parent)
     frame.columnconfigure(1, weight=1)
-    label = tk.Label(frame, text = "Distance Merope: ")
-    label.grid(row = 0, column = 0, sticky=tk.W)
-    this.ditanceLabel = tk.Label(frame, text="0 Ly")
-    this.ditanceLabel.grid(row = 0, column = 1, sticky=tk.W)
+    label = tk.Label(frame, text = "Distance Merope: ").grid(row = 0, column = 0, sticky=tk.W)
+    this.ditanceLabel = tk.Label(frame, text="0 Ly").grid(row = 0, column = 1, sticky=tk.W)
     return frame
 
 def calculateDistance(x, y, z):
