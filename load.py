@@ -35,20 +35,20 @@ def plugin_prefs(parent):
     this.settings = list()
     setting = json.loads(config.get("DistanceCalc") or "[]")
 
-    nb.Label(frameTop, text="Systems").grid(row = 0, column = 0, sticky=tk.W)
-    nb.Label(frameTop, text="X").grid(row = 0, column = 1, sticky=tk.W)
-    nb.Label(frameTop, text="Y").grid(row = 0, column = 2, sticky=tk.W)
-    nb.Label(frameTop, text="Z").grid(row = 0, column = 3, sticky=tk.W)
+    nb.Label(frameTop, text="Systems").grid(row = 0, column = 0, sticky=tk.EW)
+    nb.Label(frameTop, text="X").grid(row = 0, column = 1, sticky=tk.EW)
+    nb.Label(frameTop, text="Y").grid(row = 0, column = 2, sticky=tk.EW)
+    nb.Label(frameTop, text="Z").grid(row = 0, column = 3, sticky=tk.EW)
 
     for i in range(3):
         systemEntry = nb.Entry(frameTop)
-        systemEntry.grid(row = i + 1, column = 0, sticky=tk.W)
+        systemEntry.grid(row = i + 1, column = 0, padx = 5, sticky=tk.W)
         xEntry = nb.Entry(frameTop)
-        xEntry.grid(row = i + 1, column = 1, sticky=tk.W)
+        xEntry.grid(row = i + 1, column = 1, padx = 5, sticky=tk.W)
         yEntry = nb.Entry(frameTop)
-        yEntry.grid(row = i + 1, column = 2, sticky=tk.W)
+        yEntry.grid(row = i + 1, column = 2, padx = 5, sticky=tk.W)
         zEntry = nb.Entry(frameTop)
-        zEntry.grid(row = i + 1, column = 3, sticky=tk.W)
+        zEntry.grid(row = i + 1, column = 3, padx = 5, sticky=tk.W)
         this.settings.append([systemEntry, xEntry, yEntry, zEntry])
 
     f = lambda s, x, y, z, systemEntry, xEntry, yEntry, zEntry: (systemEntry.insert(0, s), xEntry.insert(0, x), yEntry.insert(0, y), zEntry.insert(0, z))
