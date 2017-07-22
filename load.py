@@ -51,18 +51,24 @@ def plugin_prefs(parent):
         zEntry.grid(row = i + 1, column = 3, padx = 5, sticky=tk.W)
         this.settings.append([systemEntry, xEntry, yEntry, zEntry])
 
-    f = lambda s, x, y, z, systemEntry, xEntry, yEntry, zEntry: (systemEntry.insert(0, s), xEntry.insert(0, x), yEntry.insert(0, y), zEntry.insert(0, z))
+    def fillEntries(s, x, y, z, systemEntry, xEntry, yEntry, zEntry):
+        systemEntry.insert(0, s)
+        xEntry.insert(0, x)
+        yEntry.insert(0, y)
+        zEntry.insert(0, z)
+
     row = 0
     if len(setting) > 0:
         for var in setting:
             systemEntry, xEntry, yEntry, zEntry = this.settings[row]
-            f(var["system"], var["x"], var["y"], var["z"], systemEntry, xEntry, yEntry, zEntry)
+            fillEntries(var["system"], var["x"], var["y"], var["z"], systemEntry, xEntry, yEntry, zEntry)
             row += 1
 
     nb.Label(frameTop).grid()	# spacer
     nb.Label(frameBottom, text="You can get coordinates from EDDB or EDSM or enter whatever you like.").grid(row = 4, column = 0, sticky=tk.W)
 
     return frame
+
 
 def prefs_changed():
     setting = list()
