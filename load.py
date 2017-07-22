@@ -19,6 +19,7 @@ def plugin_start():
     :return: Plugin name
     """
     sys.stderr.write("example plugin started\n")	# appears in %TMP%/EDMarketConnector.log in packaged Windows app
+    this.distances = json.loads(config.get("DistanceCalc") or "[]")
     return 'DistanceCalc'
 
 
@@ -58,10 +59,9 @@ def plugin_prefs(parent):
         yEntry.insert(0, y)
         zEntry.insert(0, z)
 
-    setting = json.loads(config.get("DistanceCalc") or "[]")
     row = 0
-    if len(setting) > 0:
-        for var in setting:
+    if len(this.distances) > 0:
+        for var in this.distances:
             systemEntry, xEntry, yEntry, zEntry = this.settingUiEntries[row]
             fillEntries(var["system"], var["x"], var["y"], var["z"], systemEntry, xEntry, yEntry, zEntry)
             row += 1
@@ -70,11 +70,10 @@ def plugin_prefs(parent):
 
 
 def updateUi():
-    setting = json.loads(config.get("DistanceCalc") or "[]")
     row = 0
-    for (system, distance) in this.distances:
-        if len(setting) >= row + 1:
-            s = setting[row]
+    for (system, distance) in this.distanceLabels:
+        if len(this.distances) >= row + 1:
+            s = this.distances[row]
             system.grid(row = row, column = 0, sticky=tk.W)
             system["text"] =  "Distance {0}:".format(s["system"])
             distance.grid(row = row, column = 1, sticky=tk.W)
@@ -86,7 +85,7 @@ def updateUi():
 
 
 def prefs_changed():
-    setting = list()
+    this.distances = list()
     for (system, x, y, z) in this.settingUiEntries:
         systemText = system.get()
         xText = x.get()
@@ -99,11 +98,11 @@ def prefs_changed():
                 d["y"] = float(yText)
                 d["x"] = float(xText)
                 d["system"] = systemText
-                setting.append(d)
+                this.distances.append(d)
             except: # error while parsing the numbers
                 sys.stderr.write("error while parsing the numbers")
                 continue
-    config.set("DistanceCalc", json.dumps(setting))
+    config.set("DistanceCalc", json.dumps(this.distances))
     updateUi()
 
 
@@ -115,9 +114,9 @@ def plugin_app(parent):
     """
     frame = tk.Frame(parent)
     frame.columnconfigure(1, weight=1)
-    this.distances = list()
+    this.distanceLabels = list()
     for i in range(3):
-        this.distances.append((tk.Label(frame), tk.Label(frame)))
+        this.distanceLabels.append((tk.Label(frame), tk.Label(frame)))
     updateUi()
     return frame
 
@@ -143,4 +142,4 @@ def journal_entry(cmdr, system, station, entry, state):
             #this.ditanceLabel["text"] = "{0:.2f} Ly".format(calculateDistance(*tuple(entry['StarPos'])))
             pass
         else:
-            this.ditanceLabel["text"] = "? LY"
+            pass
