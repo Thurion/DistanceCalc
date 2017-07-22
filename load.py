@@ -26,6 +26,7 @@ import Tkinter as tk
 from config import config
 import myNotebook as nb
 
+VERSION = "1.0"
 
 this = sys.modules[__name__]	# For holding module globals
 
@@ -39,7 +40,7 @@ def plugin_prefs(parent):
     frameTop = nb.Frame(frame)
     frameTop.grid(row = 0, column = 0, sticky=tk.W)
     frameBottom = nb.Frame(frame)
-    frameBottom.grid(row = 1, column = 0, sticky=tk.W)
+    frameBottom.grid(row = 1, column = 0, sticky=tk.SW)
 
     nb.Label(frameTop, text="Systems").grid(row = 0, column = 0, sticky=tk.EW)
     nb.Label(frameTop, text="X").grid(row = 0, column = 1, sticky=tk.EW)
@@ -59,7 +60,9 @@ def plugin_prefs(parent):
         this.settingUiEntries.append([systemEntry, xEntry, yEntry, zEntry])
 
     nb.Label(frameTop).grid()	# spacer
-    nb.Label(frameBottom, text="You can get coordinates from EDDB or EDSM or enter whatever you like.").grid(row = 4, column = 0, sticky=tk.W)
+    nb.Label(frameBottom, text="You can get coordinates from EDDB or EDSM or enter any valid coordinate.").grid(row = 0, column = 0, sticky=tk.W)
+    nb.Label(frameBottom).grid()	# spacer
+    nb.Label(frameBottom, text="Plugin version: {0}".format(VERSION)).grid(row = 2, column = 0, sticky=tk.W)
 
     def fillEntries(s, x, y, z, systemEntry, xEntry, yEntry, zEntry):
         systemEntry.insert(0, s)
