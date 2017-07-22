@@ -69,6 +69,22 @@ def plugin_prefs(parent):
     return frame
 
 
+def updateUi():
+    setting = json.loads(config.get("DistanceCalc") or "[]")
+    row = 0
+    for (system, distance) in this.distances:
+        if len(setting) >= row + 1:
+            s = setting[row]
+            system.grid(row = row, column = 0, sticky=tk.W)
+            system["text"] =  "Distance {0}:".format(s["system"])
+            distance.grid(row = row, column = 1, sticky=tk.W)
+            distance["text"] = "? Ly"
+        else:
+            system.grid_remove()
+            distance.grid_remove()
+        row += 1
+
+
 def prefs_changed():
     setting = list()
     for (system, x, y, z) in this.settingUiEntries:
@@ -88,6 +104,7 @@ def prefs_changed():
                 sys.stderr.write("error while parsing the numbers")
                 continue
     config.set("DistanceCalc", json.dumps(setting))
+    updateUi()
 
 
 def plugin_app(parent):
@@ -98,8 +115,10 @@ def plugin_app(parent):
     """
     frame = tk.Frame(parent)
     frame.columnconfigure(1, weight=1)
-    label = tk.Label(frame, text = "Distance Merope: ").grid(row = 0, column = 0, sticky=tk.W)
-    this.ditanceLabel = tk.Label(frame, text="0 Ly").grid(row = 0, column = 1, sticky=tk.W)
+    this.distances = list()
+    for i in range(3):
+        this.distances.append((tk.Label(frame), tk.Label(frame)))
+    updateUi()
     return frame
 
 
