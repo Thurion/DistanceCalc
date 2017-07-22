@@ -93,10 +93,10 @@ def prefs_changed():
         if systemText and xText and yText and zText:
             try:
                 d = dict()
-                d["z"] = float(zText)
-                d["y"] = float(yText)
-                d["x"] = float(xText)
-                d["system"] = systemText
+                d["system"] = systemText.strip()
+                d["x"] = float(xText.strip())
+                d["y"] = float(yText.strip())
+                d["z"] = float(zText.strip())
                 this.distances.append(d)
             except: # error while parsing the numbers
                 sys.stderr.write("error while parsing the numbers")
