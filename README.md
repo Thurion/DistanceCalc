@@ -1,2 +1,4 @@
 # DistanceCalc
-EDMC plugin to display the distance to up to 3 systems
+This plugin is not yet finished. DO NOT USE (yet)!
+
+
