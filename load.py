@@ -26,7 +26,7 @@ import Tkinter as tk
 from config import config
 import myNotebook as nb
 
-VERSION = "1.0"
+VERSION = "1.00"
 
 this = sys.modules[__name__]	# For holding module globals
 
