@@ -36,17 +36,31 @@ def plugin_start():
     return 'DistanceCalc'
 
 
-def getSystemInformationFromEDSM(system):
-    edsmUrl ="https://www.edsm.net/api-v1/system?systemName={SYSTEM}&showCoordinates=1".format(SYSTEM=system)
+def clearInputFields(system, x, y, z):
+    system.delete(0, tk.END)
+    x.delete(0, tk.END)
+    y.delete(0, tk.END)
+    z.delete(0, tk.END)
+
+
+def fillSystemInformationFromEDSM(systemEntry, xEntry, yEntry, zEntry):
+    if systemEntry.get() == "":
+        return # nothing to do here
+
+    edsmUrl ="https://www.edsm.net/api-v1/system?systemName={SYSTEM}&showCoordinates=1".format(SYSTEM=systemEntry.get())
     systemInformation = None
     try:
         url = urllib2.urlopen(edsmUrl)
         response = url.read()
         edsmJson = json.loads(response)
         if "name" in edsmJson and "coords" in edsmJson:
-            return (edsmJson["name"], float(edsmJson["coords"]["x"]), float(edsmJson["coords"]["y"]), float(edsmJson["coords"]["z"]))
+            clearInputFields(systemEntry, xEntry, yEntry, zEntry)
+            systemEntry.insert(0, edsmJson["name"])
+            xEntry.insert(0, edsmJson["coords"]["x"])
+            yEntry.insert(0, edsmJson["coords"]["y"])
+            zEntry.insert(0, edsmJson["coords"]["z"])
     except:
-        return None
+        sys.stderr.write("DistanceCalc: Could not get system information for {0} from EDSM".format(systemEntry.get()))
 
 
 def validate(action, index, value_if_allowed,  prior_value, text, validation_type, trigger_type, widget_name):
@@ -59,12 +73,6 @@ def validate(action, index, value_if_allowed,  prior_value, text, validation_typ
         except ValueError:
             return False
     return False
-
-def clearButtonCallback(system, x, y, z):
-    system.delete(0, tk.END)
-    x.delete(0, tk.END)
-    y.delete(0, tk.END)
-    z.delete(0, tk.END)
 
 
 def plugin_prefs(parent):
@@ -99,11 +107,11 @@ def plugin_prefs(parent):
         zEntry.grid(row = i + 1, column = 3, padx = 5, sticky=tk.W)
         zEntry.config(width = 10) # set fixed width. columnconfigure doesn't work because it already fits
 
-        clearButton = nb.Button(frameTop, text="Clear", command=partial(clearButtonCallback, systemEntry, xEntry, yEntry, zEntry))
+        clearButton = nb.Button(frameTop, text="Clear", command=partial(clearInputFields, systemEntry, xEntry, yEntry, zEntry))
         clearButton.grid(row = i + 1, column = 4, padx = 5, sticky=tk.W)
         clearButton.config(width = 7)
 
-        edsmButton = nb.Button(frameTop, text="EDSM")
+        edsmButton = nb.Button(frameTop, text="EDSM", command=partial(fillSystemInformationFromEDSM, systemEntry, xEntry, yEntry, zEntry))
         edsmButton.grid(row = i + 1, column = 5, padx = 5, sticky=tk.W)
         edsmButton.config(width = 7)
 
@@ -185,6 +193,7 @@ def plugin_app(parent):
 
 def calculateDistance(x1, y1, z1, x2, y2, z2):
     return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2 + (z1 - z2) ** 2)
+
 
 def updateDistances(coordinates = None):
     if not coordinates:
