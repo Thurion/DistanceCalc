@@ -35,6 +35,18 @@ def plugin_start():
     return 'DistanceCalc'
 
 
+def validate(action, index, value_if_allowed,  prior_value, text, validation_type, trigger_type, widget_name):    
+    if value_if_allowed == "-" or value_if_allowed == "":
+        return True
+    elif text in "0123456789." or text == value_if_allowed:
+        try:
+            float(value_if_allowed)
+            return True
+        except ValueError:
+            return False
+    return False
+
+
 def plugin_prefs(parent):
     frame = nb.Frame(parent)
     frameTop = nb.Frame(frame)
@@ -48,14 +60,15 @@ def plugin_prefs(parent):
     nb.Label(frameTop, text="Z").grid(row = 0, column = 3, sticky=tk.EW)
 
     this.settingUiEntries = list()
+    vcmd = (frameTop.register(validate), '%d', '%i', '%P', '%s', '%S', '%v', '%V', '%W')
     for i in range(3):
         systemEntry = nb.Entry(frameTop)
         systemEntry.grid(row = i + 1, column = 0, padx = 5, sticky=tk.W)
-        xEntry = nb.Entry(frameTop)
+        xEntry = nb.Entry(frameTop, validate = 'key', validatecommand = vcmd)
         xEntry.grid(row = i + 1, column = 1, padx = 5, sticky=tk.W)
-        yEntry = nb.Entry(frameTop)
+        yEntry = nb.Entry(frameTop, validate = 'key', validatecommand = vcmd)
         yEntry.grid(row = i + 1, column = 2, padx = 5, sticky=tk.W)
-        zEntry = nb.Entry(frameTop)
+        zEntry = nb.Entry(frameTop, validate = 'key', validatecommand = vcmd)
         zEntry.grid(row = i + 1, column = 3, padx = 5, sticky=tk.W)
         this.settingUiEntries.append([systemEntry, xEntry, yEntry, zEntry])
 
