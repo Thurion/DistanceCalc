@@ -22,6 +22,7 @@ import ttk
 import math
 import json
 import Tkinter as tk
+import urllib2
 
 from config import config
 import myNotebook as nb
@@ -33,6 +34,19 @@ this = sys.modules[__name__]	# For holding module globals
 def plugin_start():
     this.distances = json.loads(config.get("DistanceCalc") or "[]")
     return 'DistanceCalc'
+
+
+def getSystemInformationFromEDSM(system):
+    edsmUrl ="https://www.edsm.net/api-v1/system?systemName={SYSTEM}&showCoordinates=1".format(SYSTEM=system)
+    systemInformation = None
+    try:
+        url = urllib2.urlopen(edsmUrl)
+        response = url.read()
+        edsmJson = json.loads(response)
+        if "name" in edsmJson and "coords" in edsmJson:
+            return (edsmJson["name"], float(edsmJson["coords"]["x"]), float(edsmJson["coords"]["y"]), float(edsmJson["coords"]["z"]))
+    except:
+        return None
 
 
 def validate(action, index, value_if_allowed,  prior_value, text, validation_type, trigger_type, widget_name):
