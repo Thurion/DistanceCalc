@@ -43,8 +43,10 @@ def clearInputFields(system, x, y, z):
     z.delete(0, tk.END)
 
 
-def fillSystemInformationFromEDSM(systemEntry, xEntry, yEntry, zEntry):
+def fillSystemInformationFromEDSM(label, systemEntry, xEntry, yEntry, zEntry):
     if systemEntry.get() == "":
+        label["text"] = "No system name provided."
+        label.config(foreground="red")
         return # nothing to do here
 
     edsmUrl ="https://www.edsm.net/api-v1/system?systemName={SYSTEM}&showCoordinates=1".format(SYSTEM=systemEntry.get())
@@ -59,7 +61,14 @@ def fillSystemInformationFromEDSM(systemEntry, xEntry, yEntry, zEntry):
             xEntry.insert(0, edsmJson["coords"]["x"])
             yEntry.insert(0, edsmJson["coords"]["y"])
             zEntry.insert(0, edsmJson["coords"]["z"])
+            label["text"] = "Coordinates filled in for system {0}".format(edsmJson["name"])
+            label.config(foreground="dark green")
+        else:
+            label["text"] = "Could not get system information for {0} from EDSM".format(systemEntry.get())
+            label.config(foreground="red")
     except:
+        label["text"] = "Could not get system information for {0} from EDSM".format(systemEntry.get())
+        label.config(foreground="red")
         sys.stderr.write("DistanceCalc: Could not get system information for {0} from EDSM".format(systemEntry.get()))
 
 
@@ -87,6 +96,8 @@ def plugin_prefs(parent):
     nb.Label(frameTop, text="Y").grid(row = 0, column = 2, sticky=tk.EW)
     nb.Label(frameTop, text="Z").grid(row = 0, column = 3, sticky=tk.EW)
 
+    errorLabel = nb.Label(frameBottom, text = "")
+
     this.settingUiEntries = list()
     vcmd = (frameTop.register(validate), '%d', '%i', '%P', '%s', '%S', '%v', '%V', '%W')
 
@@ -111,16 +122,17 @@ def plugin_prefs(parent):
         clearButton.grid(row = i + 1, column = 4, padx = 5, sticky=tk.W)
         clearButton.config(width = 7)
 
-        edsmButton = nb.Button(frameTop, text="EDSM", command=partial(fillSystemInformationFromEDSM, systemEntry, xEntry, yEntry, zEntry))
+        edsmButton = nb.Button(frameTop, text="EDSM")
         edsmButton.grid(row = i + 1, column = 5, padx = 5, sticky=tk.W)
-        edsmButton.config(width = 7)
+        edsmButton.config(width = 7, command=partial(fillSystemInformationFromEDSM, errorLabel, systemEntry, xEntry, yEntry, zEntry))
 
         this.settingUiEntries.append([systemEntry, xEntry, yEntry, zEntry])
 
-    nb.Label(frameTop).grid() # spacer
-    nb.Label(frameBottom, text="You can get coordinates from EDDB or EDSM or enter any valid coordinate.").grid(row = 0, column = 0, sticky=tk.W)
+    errorLabel.grid(row = 0, column = 0, sticky=tk.W)
     nb.Label(frameBottom).grid() # spacer
-    nb.Label(frameBottom, text="Plugin version: {0}".format(VERSION)).grid(row = 2, column = 0, sticky=tk.W)
+    nb.Label(frameBottom, text="You can get coordinates from EDDB or EDSM or enter any valid coordinate.").grid(row = 2, column = 0, sticky=tk.W)
+    nb.Label(frameBottom).grid() # spacer
+    nb.Label(frameBottom, text="Plugin version: {0}".format(VERSION)).grid(row = 4, column = 0, sticky=tk.W)
 
     def fillEntries(s, x, y, z, systemEntry, xEntry, yEntry, zEntry):
         systemEntry.insert(0, s)
