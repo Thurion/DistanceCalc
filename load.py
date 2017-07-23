@@ -80,22 +80,32 @@ def plugin_prefs(parent):
         systemEntry = nb.Entry(frameTop)
         systemEntry.grid(row = i + 1, column = 0, padx = 5, sticky=tk.W)
         systemEntry.config(width = 40) # set fixed width. columnconfigure doesn't work because it already fits
+
         xEntry = nb.Entry(frameTop, validate = 'key', validatecommand = vcmd)
         xEntry.grid(row = i + 1, column = 1, padx = 5, sticky=tk.W)
         xEntry.config(width = 10) # set fixed width. columnconfigure doesn't work because it already fits
+
         yEntry = nb.Entry(frameTop, validate = 'key', validatecommand = vcmd)
         yEntry.grid(row = i + 1, column = 2, padx = 5, sticky=tk.W)
         yEntry.config(width = 10) # set fixed width. columnconfigure doesn't work because it already fits
+
         zEntry = nb.Entry(frameTop, validate = 'key', validatecommand = vcmd)
         zEntry.grid(row = i + 1, column = 3, padx = 5, sticky=tk.W)
         zEntry.config(width = 10) # set fixed width. columnconfigure doesn't work because it already fits
-        nb.Button(frameTop, text="EDSM").grid(row = i + 1, column = 4, padx = 5, sticky=tk.W)
+
+        clearButton = nb.Button(frameTop, text="Clear")
+        clearButton.grid(row = i + 1, column = 4, padx = 5, sticky=tk.W)
+        clearButton.config(width = 5)
+
+        edsmButton = nb.Button(frameTop, text="EDSM")
+        edsmButton.grid(row = i + 1, column = 5, padx = 5, sticky=tk.W)
+        edsmButton.config(width = 5)
 
         this.settingUiEntries.append([systemEntry, xEntry, yEntry, zEntry])
 
-    nb.Label(frameTop).grid()	# spacer
+    nb.Label(frameTop).grid() # spacer
     nb.Label(frameBottom, text="You can get coordinates from EDDB or EDSM or enter any valid coordinate.").grid(row = 0, column = 0, sticky=tk.W)
-    nb.Label(frameBottom).grid()	# spacer
+    nb.Label(frameBottom).grid() # spacer
     nb.Label(frameBottom, text="Plugin version: {0}".format(VERSION)).grid(row = 2, column = 0, sticky=tk.W)
 
     def fillEntries(s, x, y, z, systemEntry, xEntry, yEntry, zEntry):
