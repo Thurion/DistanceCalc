@@ -35,12 +35,12 @@ def plugin_start():
     return 'DistanceCalc'
 
 
-def validate(action, index, value_if_allowed,  prior_value, text, validation_type, trigger_type, widget_name):    
+def validate(action, index, value_if_allowed,  prior_value, text, validation_type, trigger_type, widget_name):
     if value_if_allowed == "-" or value_if_allowed == "":
         return True
-    elif text in "0123456789." or text == value_if_allowed:
+    elif text in "0123456789.," or text == value_if_allowed:
         try:
-            float(value_if_allowed)
+            float(value_if_allowed.replace(",", "."))
             return True
         except ValueError:
             return False
@@ -124,9 +124,9 @@ def prefs_changed():
             try:
                 d = dict()
                 d["system"] = systemText.strip()
-                d["x"] = float(xText.strip())
-                d["y"] = float(yText.strip())
-                d["z"] = float(zText.strip())
+                d["x"] = float(xText.strip().replace(",", "."))
+                d["y"] = float(yText.strip().replace(",", "."))
+                d["z"] = float(zText.strip().replace(",", "."))
                 this.distances.append(d)
             except: # error while parsing the numbers
                 sys.stderr.write("DistanceCalc: Error while parsing the coordinates for {0}".format(systemText.strip()))
