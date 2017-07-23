@@ -23,7 +23,7 @@ import math
 import json
 import Tkinter as tk
 import urllib2
-
+from functools import partial
 from config import config
 import myNotebook as nb
 
@@ -60,6 +60,12 @@ def validate(action, index, value_if_allowed,  prior_value, text, validation_typ
             return False
     return False
 
+def clearButtonCallback(system, x, y, z):
+    system.delete(0, tk.END)
+    x.delete(0, tk.END)
+    y.delete(0, tk.END)
+    z.delete(0, tk.END)
+
 
 def plugin_prefs(parent):
     frame = nb.Frame(parent)
@@ -93,13 +99,13 @@ def plugin_prefs(parent):
         zEntry.grid(row = i + 1, column = 3, padx = 5, sticky=tk.W)
         zEntry.config(width = 10) # set fixed width. columnconfigure doesn't work because it already fits
 
-        clearButton = nb.Button(frameTop, text="Clear")
+        clearButton = nb.Button(frameTop, text="Clear", command=partial(clearButtonCallback, systemEntry, xEntry, yEntry, zEntry))
         clearButton.grid(row = i + 1, column = 4, padx = 5, sticky=tk.W)
-        clearButton.config(width = 5)
+        clearButton.config(width = 7)
 
         edsmButton = nb.Button(frameTop, text="EDSM")
         edsmButton.grid(row = i + 1, column = 5, padx = 5, sticky=tk.W)
-        edsmButton.config(width = 5)
+        edsmButton.config(width = 7)
 
         this.settingUiEntries.append([systemEntry, xEntry, yEntry, zEntry])
 
