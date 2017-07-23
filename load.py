@@ -75,15 +75,22 @@ def plugin_prefs(parent):
 
     this.settingUiEntries = list()
     vcmd = (frameTop.register(validate), '%d', '%i', '%P', '%s', '%S', '%v', '%V', '%W')
+
     for i in range(3):
         systemEntry = nb.Entry(frameTop)
         systemEntry.grid(row = i + 1, column = 0, padx = 5, sticky=tk.W)
+        systemEntry.config(width = 40) # set fixed width. columnconfigure doesn't work because it already fits
         xEntry = nb.Entry(frameTop, validate = 'key', validatecommand = vcmd)
         xEntry.grid(row = i + 1, column = 1, padx = 5, sticky=tk.W)
+        xEntry.config(width = 10) # set fixed width. columnconfigure doesn't work because it already fits
         yEntry = nb.Entry(frameTop, validate = 'key', validatecommand = vcmd)
         yEntry.grid(row = i + 1, column = 2, padx = 5, sticky=tk.W)
+        yEntry.config(width = 10) # set fixed width. columnconfigure doesn't work because it already fits
         zEntry = nb.Entry(frameTop, validate = 'key', validatecommand = vcmd)
         zEntry.grid(row = i + 1, column = 3, padx = 5, sticky=tk.W)
+        zEntry.config(width = 10) # set fixed width. columnconfigure doesn't work because it already fits
+        nb.Button(frameTop, text="EDSM").grid(row = i + 1, column = 4, padx = 5, sticky=tk.W)
+
         this.settingUiEntries.append([systemEntry, xEntry, yEntry, zEntry])
 
     nb.Label(frameTop).grid()	# spacer
