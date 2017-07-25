@@ -49,7 +49,7 @@ def fillSystemInformationFromEDSM(label, systemEntry, xEntry, yEntry, zEntry):
         label.config(foreground="red")
         return # nothing to do here
 
-    edsmUrl ="https://www.edsm.net/api-v1/system?systemName={SYSTEM}&showCoordinates=1".format(SYSTEM=systemEntry.get())
+    edsmUrl = "https://www.edsm.net/api-v1/system?systemName={SYSTEM}&showCoordinates=1".format(SYSTEM=urllib2.quote(systemEntry.get()))
     systemInformation = None
     try:
         url = urllib2.urlopen(edsmUrl)
