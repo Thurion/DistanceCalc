@@ -52,7 +52,7 @@ def fillSystemInformationFromEDSM(label, systemEntry, xEntry, yEntry, zEntry):
     edsmUrl = "https://www.edsm.net/api-v1/system?systemName={SYSTEM}&showCoordinates=1".format(SYSTEM=urllib2.quote(systemEntry.get()))
     systemInformation = None
     try:
-        url = urllib2.urlopen(edsmUrl)
+        url = urllib2.urlopen(edsmUrl, timeout=5)
         response = url.read()
         edsmJson = json.loads(response)
         if "name" in edsmJson and "coords" in edsmJson:
