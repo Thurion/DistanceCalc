@@ -136,8 +136,8 @@ def plugin_prefs(parent):
 
         this.settingUiEntries.append([systemEntry, xEntry, yEntry, zEntry])
 
-    nb.Label(frameTop, text="You can get coordinates from EDDB or EDSM or enter any valid coordinate.").grid(row = 4, column = 0, columnspan = 6, padx = PADX * 2, sticky=tk.W)
-    errorLabel.grid(row = 5, column = 0, columnspan = 6, padx = PADX * 2, sticky=tk.W)
+    errorLabel.grid(row = 4, column = 0, columnspan = 6, padx = PADX * 2, sticky=tk.W)
+    nb.Label(frameTop, text="You can get coordinates from EDDB or EDSM or enter any valid coordinate.").grid(row = 5, column = 0, columnspan = 6, padx = PADX * 2, sticky=tk.W)
     ttk.Separator(frameTop, orient=tk.HORIZONTAL).grid(row = 6, columnspan = 6, padx=PADX * 2, pady=8, sticky=tk.EW)
 
     #nb.Label(frameBottom).grid() # spacer
