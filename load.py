@@ -30,7 +30,7 @@ from l10n import Locale
 from config import config
 import myNotebook as nb
 
-VERSION = "1.20 Beta"
+VERSION = "1.20"
 PADX = 5
 WIDTH = 10
 
