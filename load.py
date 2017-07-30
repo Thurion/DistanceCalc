@@ -113,6 +113,10 @@ def getSettingsTravelled():
     return (settingTotal, settingSession, settingSessionOption)
 
 
+def resetTotalTravelledDistance():
+    config.set("DistanceCalc_travelled", 0)
+    this.distanceTotal = 0.0
+
 def plugin_prefs(parent):
     frame = nb.Frame(parent)
     frameTop = nb.Frame(frame)
@@ -168,24 +172,28 @@ def plugin_prefs(parent):
     travelledTotal = nb.Checkbutton(frameBottom, variable=travelledTotalOption, text="Calculate total travelled distance")
     travelledTotal.var = travelledTotalOption
     travelledTotal.grid(row=0, column=0, padx=PADX*2, sticky=tk.W)
+    resetButton = nb.Button(frameBottom, text="Reset", command=resetTotalTravelledDistance)
+    resetButton.grid(row=1, column=0, padx=PADX*4, pady=5, sticky=tk.W)
+    
     travelledSession = nb.Checkbutton(frameBottom, variable=travelledSessionOption, text="Calculate travelled distance for current session")
     travelledSession.var = travelledSessionOption
-    travelledSession.grid(row=1, column=0, padx=PADX*2, sticky=tk.W)
+    travelledSession.grid(row=2, column=0, padx=PADX*2, sticky=tk.W)
+    
     # radio button value: 1 = calculate for ED session; 0 = calculate for EDMC session
     travelledSessionEdmc = nb.Radiobutton(frameBottom, variable=travelledSessionSelected, value=0, text="EDMC session")
     travelledSessionEdmc.var = travelledSessionSelected
-    travelledSessionEdmc.grid(row=2, column=0, padx=PADX*4, sticky=tk.W)
+    travelledSessionEdmc.grid(row=3, column=0, padx=PADX*4, sticky=tk.W)
+    
     travelledSessionElite = nb.Radiobutton(frameBottom, variable=travelledSessionSelected, value=1, text="Elite session")
     travelledSessionElite.var = travelledSessionSelected
-    travelledSessionElite.grid(row=3, column=0, padx=PADX*4, sticky=tk.W)
-
-    nb.Label(frameBottom).grid(row=4) # spacer
+    travelledSessionElite.grid(row=4, column=0, padx=PADX*4, sticky=tk.W)
+    
     nb.Label(frameBottom).grid(row=5) # spacer
-    nb.Label(frameBottom, text="Plugin version: {0}".format(VERSION)).grid(row=6, column=0, padx=PADX, sticky=tk.W)
+    nb.Label(frameBottom).grid(row=6) # spacer
+    nb.Label(frameBottom, text="Plugin version: {0}".format(VERSION)).grid(row=7, column=0, padx=PADX, sticky=tk.W)
     link = nb.Label(frameBottom, text="Open the Github page for this plugin", fg="blue", cursor="hand2")
-    link.grid(row=7, column=0, padx=PADX, sticky=tk.W)
+    link.grid(row=8, column=0, padx=PADX, sticky=tk.W)
     link.bind("<Button-1>", openGithub)
-
 
     def fillEntries(s, x, y, z, systemEntry, xEntry, yEntry, zEntry):
         systemEntry.insert(0, s)
