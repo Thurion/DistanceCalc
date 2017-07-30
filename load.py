@@ -26,6 +26,7 @@ import urllib2
 import webbrowser
 from threading import Thread
 from functools import partial
+from l10n import Locale
 from config import config
 import myNotebook as nb
 
@@ -94,8 +95,9 @@ def validate(action, index, value_if_allowed,  prior_value, text, validation_typ
         return True
     elif text in "0123456789.," or text == value_if_allowed:
         try:
-            float(value_if_allowed.replace(",", "."))
-            return True
+            t = type(Locale.numberFromString(value_if_allowed))
+            if t is float or t is int:
+                return True
         except ValueError:
             return False
     return False
@@ -116,6 +118,7 @@ def getSettingsTravelled():
 def resetTotalTravelledDistance():
     config.set("DistanceCalc_travelled", 0)
     this.distanceTotal = 0.0
+
 
 def plugin_prefs(parent):
     frame = nb.Frame(parent)
@@ -197,9 +200,10 @@ def plugin_prefs(parent):
 
     def fillEntries(s, x, y, z, systemEntry, xEntry, yEntry, zEntry):
         systemEntry.insert(0, s)
-        xEntry.insert(0, x)
-        yEntry.insert(0, y)
-        zEntry.insert(0, z)
+        newx = Locale.stringFromNumber(x)
+        xEntry.insert(0, Locale.stringFromNumber(x))
+        yEntry.insert(0, Locale.stringFromNumber(y))
+        zEntry.insert(0, Locale.stringFromNumber(z))
 
     row = 0
     if len(this.distances) > 0:
@@ -245,7 +249,7 @@ def updateUi():
             description.grid(row=row, column=0, sticky=tk.W)
             description["text"] = "Travelled ({0}):".format("total" if i == 0 else "session")
             distance.grid(row=row, column=1, sticky=tk.W)
-            distance["text"] = "{0} Ly".format(this.distanceTotal if i == 0 else this.distanceSession)
+            distance["text"] = "{0} Ly".format(Locale.stringFromNumber(this.distanceTotal, 2) if i == 0 else Locale.stringFromNumber(this.distanceSession, 2))
             row += 1
         else:
             description.grid_remove()
@@ -263,9 +267,9 @@ def prefs_changed():
             try:
                 d = dict()
                 d["system"] = systemText.strip()
-                d["x"] = float(xText.strip().replace(",", "."))
-                d["y"] = float(yText.strip().replace(",", "."))
-                d["z"] = float(zText.strip().replace(",", "."))
+                d["x"] = Locale.numberFromString(xText.strip())
+                d["y"] = Locale.numberFromString(yText.strip())
+                d["z"] = Locale.numberFromString(zText.strip())
                 this.distances.append(d)
             except: # error while parsing the numbers
                 sys.stderr.write("DistanceCalc: Error while parsing the coordinates for {0}".format(systemText.strip()))
@@ -306,12 +310,12 @@ def updateDistances():
         for i in range(len(this.distances)):
             system = this.distances[i]
             distance = calculateDistance(system["x"], system["y"], system["z"], *this.coordinates)
-            this.distanceLabels[i][1]["text"] = "{0:.2f} Ly".format(distance)
+            this.distanceLabels[i][1]["text"] = "{0} Ly".format(Locale.stringFromNumber(distance, 2))
 
     _, distance = this.travelledLabels[0]
-    distance["text"] = "{0:.2f} Ly".format(this.distanceTotal)
+    distance["text"] = "{0} Ly".format(Locale.stringFromNumber(this.distanceTotal, 2))
     _, distance = this.travelledLabels[1]
-    distance["text"] = "{0:.2f} Ly".format(this.distanceSession)
+    distance["text"] = "{0} Ly".format(Locale.stringFromNumber(this.distanceSession, 2))
 
 
 
