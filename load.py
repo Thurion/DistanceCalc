@@ -38,6 +38,12 @@ this = sys.modules[__name__]	# For holding module globals
 def plugin_start():
     this.distances = json.loads(config.get("DistanceCalc") or "[]")
     this.coordinates = None
+    this.distanceTotal = float(config.getint("DistanceCalc_travelled") or 0) / 1000.0
+    this.distanceSession = 0.0
+    a, b, c = getSettingsTravelled()
+    this.travelledTotalOption = tk.IntVar(value=a and 1)
+    this.travelledSessionOption = tk.IntVar(value=b and 1)
+    this.travelledSessionSelected = tk.IntVar(value=c and 1)
     return 'DistanceCalc'
 
 
@@ -49,6 +55,7 @@ def clearInputFields(system, x, y, z):
 
 
 def fillSystemInformationFromEDSM(label, systemEntry, xEntry, yEntry, zEntry):
+    # TODO fix possible issues because of thread-safety
     if systemEntry.get() == "":
         label["text"] = "No system name provided."
         label.config(foreground="red")
@@ -157,11 +164,7 @@ def plugin_prefs(parent):
     nb.Label(frameTop, text="You can get coordinates from EDDB or EDSM or enter any valid coordinate.").grid(row=5, column=0, columnspan=6, padx=PADX*2, sticky=tk.W)
     ttk.Separator(frameTop, orient=tk.HORIZONTAL).grid(row=6, columnspan=6, padx=PADX*2, pady=8, sticky=tk.EW)
 
-    a, b, c = getSettingsTravelled()
-    this.travelledTotalOption = tk.IntVar(value=a and 1)
-    this.travelledSessionOption = tk.IntVar(value=b and 1)
-    this.travelledSessionSelected = tk.IntVar(value=c and 1)
-
+    # total travelled distance
     travelledTotal = nb.Checkbutton(frameBottom, variable=travelledTotalOption, text="Calculate total travelled distance")
     travelledTotal.var = travelledTotalOption
     travelledTotal.grid(row=0, column=0, padx=PADX*2, sticky=tk.W)
@@ -176,9 +179,11 @@ def plugin_prefs(parent):
     travelledSessionElite.var = travelledSessionSelected
     travelledSessionElite.grid(row=3, column=0, padx=PADX*4, sticky=tk.W)
 
-    nb.Label(frameBottom, text="Plugin version: {0}".format(VERSION)).grid(row=5, column=0, padx=PADX, sticky=tk.W)
+    nb.Label(frameBottom).grid(row=4) # spacer
+    nb.Label(frameBottom).grid(row=5) # spacer
+    nb.Label(frameBottom, text="Plugin version: {0}".format(VERSION)).grid(row=6, column=0, padx=PADX, sticky=tk.W)
     link = nb.Label(frameBottom, text="Open the Github page for this plugin", fg="blue", cursor="hand2")
-    link.grid(row=6, column=0, padx=PADX, sticky=tk.W)
+    link.grid(row=7, column=0, padx=PADX, sticky=tk.W)
     link.bind("<Button-1>", openGithub)
 
 
@@ -199,15 +204,17 @@ def plugin_prefs(parent):
 
 
 def updateUi():
-    row = 0
     if len(this.distances) == 0:
         # possible bug in tkinter: when everythng is removed from frame it isn't resized. set height to 1 pixel
         system, _ = this.distanceLabels[0]
-        system.master.config(height = 1)
+        system.master.config(height=1)
     else:
         # set height back to default
         system, _ = this.distanceLabels[0]
-        system.master.config(height = 0)
+        system.master.config(height=0)
+    
+    # labels for distances to systems
+    row = 0
     for (system, distance) in this.distanceLabels:
         if len(this.distances) >= row + 1:
             s = this.distances[row]
@@ -215,10 +222,26 @@ def updateUi():
             system["text"] =  "Distance {0}:".format(s["system"])
             distance.grid(row=row, column=1, sticky=tk.W)
             distance["text"] = "? Ly"
+            row += 1
         else:
             system.grid_remove()
             distance.grid_remove()
-        row += 1
+
+    # labels for total travelled distance
+    settingTotal, settingSession, settingSessionOption = getSettingsTravelled()
+    description, distance = this.travelledLabels[0]
+
+    for i in range(len(this.travelledLabels)):
+        description, distance = this.travelledLabels[i]
+        if (i == 0 and settingTotal) or (i == 1 and settingSession):
+            description.grid(row=row, column=0, sticky=tk.W)
+            description["text"] = "Travelled ({0}):".format("total" if i == 0 else "session")
+            distance.grid(row=row, column=1, sticky=tk.W)
+            distance["text"] = "{0} Ly".format(this.distanceTotal if i == 0 else this.distanceSession)
+            row += 1
+        else:
+            description.grid_remove()
+            distance.grid_remove()
 
 
 def prefs_changed():
@@ -241,7 +264,7 @@ def prefs_changed():
                 continue
     config.set("DistanceCalc", json.dumps(this.distances))
 
-    settings = (this.travelledTotalOption.get() << 2) | (this.travelledSessionOption.get() << 1) | this.travelledSessionSelected.get()
+    settings = this.travelledTotalOption.get() | (this.travelledSessionOption.get() << 1) | (this.travelledSessionSelected.get() << 2)
     config.set("DistanceCalc_options", settings)
 
     updateUi()
@@ -254,6 +277,11 @@ def plugin_app(parent):
     this.distanceLabels = list()
     for i in range(3):
         this.distanceLabels.append((tk.Label(frame), tk.Label(frame)))
+
+    this.travelledLabels = list()
+    for i in range(2):
+        this.travelledLabels.append((tk.Label(frame), tk.Label(frame)))
+
     updateUi()
     return frame
 
@@ -272,10 +300,27 @@ def updateDistances():
             distance = calculateDistance(system["x"], system["y"], system["z"], *this.coordinates)
             this.distanceLabels[i][1]["text"] = "{0:.2f} Ly".format(distance)
 
+    _, distance = this.travelledLabels[0]
+    distance["text"] = "{0:.2f} Ly".format(this.distanceTotal)
+    _, distance = this.travelledLabels[1]
+    distance["text"] = "{0:.2f} Ly".format(this.distanceSession)
+
+
 
 def journal_entry(cmdr, system, station, entry, state):
     if entry["event"] == "FSDJump" or entry["event"] == "Location":
         # We arrived at a new system!
-        if 'StarPos' in entry:
-            this.coordinates = tuple(entry['StarPos'])
+        if "StarPos" in entry:
+            this.coordinates = tuple(entry["StarPos"])
+        if "JumpDist" in entry:
+            distance = entry["JumpDist"]
+            if this.travelledTotalOption.get():
+                this.distanceTotal += distance
+                config.set("DistanceCalc_travelled", int(this.distanceTotal * 1000))
+            if this.travelledSessionOption.get():
+                this.distanceSession += distance
         updateDistances()
+    if entry["event"] == "LoadGame" and this.travelledSessionOption.get() and this.travelledSessionSelected.get():
+        this.distanceSession = 0.0
+        updateDistances()
+
