@@ -27,7 +27,7 @@ from functools import partial
 from config import config
 import myNotebook as nb
 
-VERSION = "1.10"
+VERSION = "1.20 Beta"
 
 this = sys.modules[__name__]	# For holding module globals
 
