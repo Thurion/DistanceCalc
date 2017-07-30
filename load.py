@@ -33,6 +33,7 @@ this = sys.modules[__name__]	# For holding module globals
 
 def plugin_start():
     this.distances = json.loads(config.get("DistanceCalc") or "[]")
+    this.coordinates = None
     return 'DistanceCalc'
 
 
@@ -190,6 +191,7 @@ def prefs_changed():
                 continue
     config.set("DistanceCalc", json.dumps(this.distances))
     updateUi()
+    updateDistances()
 
 
 def plugin_app(parent):
@@ -207,14 +209,14 @@ def calculateDistance(x1, y1, z1, x2, y2, z2):
     return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2 + (z1 - z2) ** 2)
 
 
-def updateDistances(coordinates = None):
-    if not coordinates:
+def updateDistances():
+    if not this.coordinates:
         for (_, distance) in this.distanceLabels:
             distance["text"] = "? Ly"
     else:
         for i in range(len(this.distances)):
             system = this.distances[i]
-            distance = calculateDistance(system["x"], system["y"], system["z"], *coordinates)
+            distance = calculateDistance(system["x"], system["y"], system["z"], *this.coordinates)
             this.distanceLabels[i][1]["text"] = "{0:.2f} Ly".format(distance)
 
 
@@ -222,6 +224,5 @@ def journal_entry(cmdr, system, station, entry, state):
     if entry["event"] == "FSDJump" or entry["event"] == "Location":
         # We arrived at a new system!
         if 'StarPos' in entry:
-            updateDistances(tuple(entry['StarPos']))
-        else:
-            updateDistances()
+            this.coordinates = tuple(entry['StarPos'])
+        updateDistances()
