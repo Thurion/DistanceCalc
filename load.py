@@ -23,6 +23,7 @@ import math
 import json
 import Tkinter as tk
 import urllib2
+from threading import Thread
 from functools import partial
 from config import config
 import myNotebook as nb
@@ -71,6 +72,11 @@ def fillSystemInformationFromEDSM(label, systemEntry, xEntry, yEntry, zEntry):
         label["text"] = "Could not get system information for {0} from EDSM".format(systemEntry.get())
         label.config(foreground="red")
         sys.stderr.write("DistanceCalc: Could not get system information for {0} from EDSM".format(systemEntry.get()))
+
+
+def fillSystemInformationFromEdmsAsync(label, systemEntry, xEntry, yEntry, zEntry):
+    t = Thread(name="EDSM_caller_{0}".format(label), target=fillSystemInformationFromEDSM, args=(label, systemEntry, xEntry, yEntry, zEntry))
+    t.start()
 
 
 def validate(action, index, value_if_allowed,  prior_value, text, validation_type, trigger_type, widget_name):
