@@ -138,7 +138,7 @@ def plugin_prefs(parent):
 
         edsmButton = nb.Button(frameTop, text="EDSM")
         edsmButton.grid(row=i+1, column=5, padx=(PADX, PADX*2), sticky=tk.W)
-        edsmButton.config(width=7, command=partial(fillSystemInformationFromEDSM, errorLabel, systemEntry, xEntry, yEntry, zEntry))
+        edsmButton.config(width=7, command=partial(fillSystemInformationFromEdmsAsync, errorLabel, systemEntry, xEntry, yEntry, zEntry))
 
         this.settingUiEntries.append([systemEntry, xEntry, yEntry, zEntry])
 
