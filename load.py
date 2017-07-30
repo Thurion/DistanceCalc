@@ -128,6 +128,7 @@ def setStateRadioButtons(travelledSessionEdmc, travelledSessionElite):
         travelledSessionEdmc["state"] = "disabled"
         travelledSessionElite["state"] = "disabled"
 
+
 def plugin_prefs(parent):
     frame = nb.Frame(parent)
     frameTop = nb.Frame(frame)
@@ -226,16 +227,7 @@ def plugin_prefs(parent):
     return frame
 
 
-def updateUi():
-    if len(this.distances) == 0:
-        # possible bug in tkinter: when everythng is removed from frame it isn't resized. set height to 1 pixel
-        system, _ = this.distanceLabels[0]
-        system.master.config(height=1)
-    else:
-        # set height back to default
-        system, _ = this.distanceLabels[0]
-        system.master.config(height=0)
-    
+def updateUi():  
     # labels for distances to systems
     row = 0
     for (system, distance) in this.distanceLabels:
@@ -265,6 +257,11 @@ def updateUi():
         else:
             description.grid_remove()
             distance.grid_remove()
+
+    if row == 0:
+        this.emptyFrame.grid(row = 0)
+    else:
+        this.emptyFrame.grid_remove()
 
 
 def prefs_changed():
@@ -296,6 +293,7 @@ def prefs_changed():
 
 def plugin_app(parent):
     frame = tk.Frame(parent)
+    this.emptyFrame = tk.Frame(frame)
     frame.columnconfigure(1, weight=1)
     this.distanceLabels = list()
     for i in range(3):
