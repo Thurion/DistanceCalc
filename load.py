@@ -30,6 +30,7 @@ import myNotebook as nb
 
 VERSION = "1.20 Beta"
 PADX = 5
+WIDTH = 10
 
 this = sys.modules[__name__]	# For holding module globals
 
@@ -112,19 +113,19 @@ def plugin_prefs(parent):
     for i in range(3):
         systemEntry = nb.Entry(frameTop)
         systemEntry.grid(row=i+1, column=0, padx=(PADX*2, PADX), sticky=tk.W)
-        systemEntry.config(width=40) # set fixed width. columnconfigure doesn't work because it already fits
+        systemEntry.config(width=WIDTH*4) # set fixed width. columnconfigure doesn't work because it already fits
 
         xEntry = nb.Entry(frameTop, validate='key', validatecommand = vcmd)
         xEntry.grid(row=i+1, column=1, padx=PADX, sticky=tk.W)
-        xEntry.config(width=10) # set fixed width. columnconfigure doesn't work because it already fits
+        xEntry.config(width=WIDTH) # set fixed width. columnconfigure doesn't work because it already fits
 
         yEntry = nb.Entry(frameTop, validate='key', validatecommand = vcmd)
         yEntry.grid(row=i+1, column=2, padx=PADX, sticky=tk.W)
-        yEntry.config(width=10) # set fixed width. columnconfigure doesn't work because it already fits
+        yEntry.config(width=WIDTH) # set fixed width. columnconfigure doesn't work because it already fits
 
         zEntry = nb.Entry(frameTop, validate='key', validatecommand = vcmd)
         zEntry.grid(row=i+1, column=3, padx=PADX, sticky=tk.W)
-        zEntry.config(width=10) # set fixed width. columnconfigure doesn't work because it already fits
+        zEntry.config(width=WIDTH) # set fixed width. columnconfigure doesn't work because it already fits
 
         clearButton = nb.Button(frameTop, text="Clear", command=partial(clearInputFields, systemEntry, xEntry, yEntry, zEntry))
         clearButton.grid(row=i+1, column=4, padx=PADX, sticky=tk.W)
