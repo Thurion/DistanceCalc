@@ -154,10 +154,13 @@ def plugin_prefs(parent):
 def updateUi():
     row = 0
     if len(this.distances) == 0:
-        # possible bug in tkinter: when everythng is removed from frame it isn't resized. add this instead
-        this.unspecified.grid(row = row, column = 0, sticky=tk.W)
+        # possible bug in tkinter: when everythng is removed from frame it isn't resized. set height to 1 pixel
+        system, _ = this.distanceLabels[0]
+        system.master.config(height = 1)
     else:
-        this.unspecified.grid_remove()
+        # set height back to default
+        system, _ = this.distanceLabels[0]
+        system.master.config(height = 0)
     for (system, distance) in this.distanceLabels:
         if len(this.distances) >= row + 1:
             s = this.distances[row]
@@ -197,7 +200,6 @@ def prefs_changed():
 def plugin_app(parent):
     frame = tk.Frame(parent)
     frame.columnconfigure(1, weight=1)
-    this.unspecified = tk.Label(frame, text="No systems specified")
     this.distanceLabels = list()
     for i in range(3):
         this.distanceLabels.append((tk.Label(frame), tk.Label(frame)))
