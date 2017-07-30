@@ -98,6 +98,14 @@ def openGithub(event):
     webbrowser.open_new(r"https://github.com/Thurion/DistanceCalc")
 
 
+def getSettingsTravelled():
+    settings = config.getint("DistanceCalc_options")
+    settingTotal = settings & 1 # calculate total distance travelled
+    settingSession = (settings >> 1) & 1 # calculate for session only
+    settingSessionOption = (settings >> 2) & 1 # 1 = calculate for ED session; 0 = calculate for EDMC session
+    return (settingTotal, settingSession, settingSessionOption)
+
+
 def plugin_prefs(parent):
     frame = nb.Frame(parent)
     frameTop = nb.Frame(frame)
@@ -105,6 +113,7 @@ def plugin_prefs(parent):
     frameBottom = nb.Frame(frame)
     frameBottom.grid(row=1, column=0, sticky=tk.SW)
 
+    # headline
     nb.Label(frameTop, text="Systems").grid(row=0, column=0, sticky=tk.EW)
     nb.Label(frameTop, text="X").grid(row=0, column=1, sticky=tk.EW)
     nb.Label(frameTop, text="Y").grid(row=0, column=2, sticky=tk.EW)
@@ -115,6 +124,7 @@ def plugin_prefs(parent):
     this.settingUiEntries = list()
     vcmd = (frameTop.register(validate), '%d', '%i', '%P', '%s', '%S', '%v', '%V', '%W')
 
+    # create and add fields to enter systems
     for i in range(3):
         systemEntry = nb.Entry(frameTop)
         systemEntry.grid(row=i+1, column=0, padx=(PADX*2, PADX), sticky=tk.W)
@@ -142,9 +152,29 @@ def plugin_prefs(parent):
 
         this.settingUiEntries.append([systemEntry, xEntry, yEntry, zEntry])
 
+    # EDSM result label and information about what coordinates can be entered
     errorLabel.grid(row=4, column=0, columnspan=6, padx=PADX*2, sticky=tk.W)
     nb.Label(frameTop, text="You can get coordinates from EDDB or EDSM or enter any valid coordinate.").grid(row=5, column=0, columnspan=6, padx=PADX*2, sticky=tk.W)
     ttk.Separator(frameTop, orient=tk.HORIZONTAL).grid(row=6, columnspan=6, padx=PADX*2, pady=8, sticky=tk.EW)
+
+    a, b, c = getSettingsTravelled()
+    this.travelledTotalOption = tk.IntVar(value=a and 1)
+    this.travelledSessionOption = tk.IntVar(value=b and 1)
+    this.travelledSessionSelected = tk.IntVar(value=c and 1)
+
+    travelledTotal = nb.Checkbutton(frameBottom, variable=travelledTotalOption, text="Calculate total travelled distance")
+    travelledTotal.var = travelledTotalOption
+    travelledTotal.grid(row=0, column=0, padx=PADX*2, sticky=tk.W)
+    travelledSession = nb.Checkbutton(frameBottom, variable=travelledSessionOption, text="Calculate travelled distance for current session")
+    travelledSession.var = travelledSessionOption
+    travelledSession.grid(row=1, column=0, padx=PADX*2, sticky=tk.W)
+    # radio button value: 1 = calculate for ED session; 0 = calculate for EDMC session
+    travelledSessionEdmc = nb.Radiobutton(frameBottom, variable=travelledSessionSelected, value=0, text="EDMC session")
+    travelledSessionEdmc.var = travelledSessionSelected
+    travelledSessionEdmc.grid(row=2, column=0, padx=PADX*4, sticky=tk.W)
+    travelledSessionElite = nb.Radiobutton(frameBottom, variable=travelledSessionSelected, value=1, text="Elite session")
+    travelledSessionElite.var = travelledSessionSelected
+    travelledSessionElite.grid(row=3, column=0, padx=PADX*4, sticky=tk.W)
 
     nb.Label(frameBottom, text="Plugin version: {0}".format(VERSION)).grid(row=5, column=0, padx=PADX, sticky=tk.W)
     link = nb.Label(frameBottom, text="Open the Github page for this plugin", fg="blue", cursor="hand2")
@@ -210,6 +240,10 @@ def prefs_changed():
                 sys.stderr.write("DistanceCalc: Error while parsing the coordinates for {0}".format(systemText.strip()))
                 continue
     config.set("DistanceCalc", json.dumps(this.distances))
+
+    settings = (this.travelledTotalOption.get() << 2) | (this.travelledSessionOption.get() << 1) | this.travelledSessionSelected.get()
+    config.set("DistanceCalc_options", settings)
+
     updateUi()
     updateDistances()
 
