@@ -29,6 +29,7 @@ from config import config
 import myNotebook as nb
 
 VERSION = "1.20 Beta"
+PADX = 5
 
 this = sys.modules[__name__]	# For holding module globals
 
@@ -103,43 +104,45 @@ def plugin_prefs(parent):
     nb.Label(frameTop, text="Y").grid(row = 0, column = 2, sticky=tk.EW)
     nb.Label(frameTop, text="Z").grid(row = 0, column = 3, sticky=tk.EW)
 
-    errorLabel = nb.Label(frameBottom, text = "")
+    errorLabel = nb.Label(frameTop, text = "")
 
     this.settingUiEntries = list()
     vcmd = (frameTop.register(validate), '%d', '%i', '%P', '%s', '%S', '%v', '%V', '%W')
 
     for i in range(3):
         systemEntry = nb.Entry(frameTop)
-        systemEntry.grid(row = i + 1, column = 0, padx = 5, sticky=tk.W)
+        systemEntry.grid(row = i + 1, column = 0, padx = (PADX * 2, PADX), sticky=tk.W)
         systemEntry.config(width = 40) # set fixed width. columnconfigure doesn't work because it already fits
 
         xEntry = nb.Entry(frameTop, validate = 'key', validatecommand = vcmd)
-        xEntry.grid(row = i + 1, column = 1, padx = 5, sticky=tk.W)
+        xEntry.grid(row = i + 1, column = 1, padx = PADX, sticky=tk.W)
         xEntry.config(width = 10) # set fixed width. columnconfigure doesn't work because it already fits
 
         yEntry = nb.Entry(frameTop, validate = 'key', validatecommand = vcmd)
-        yEntry.grid(row = i + 1, column = 2, padx = 5, sticky=tk.W)
+        yEntry.grid(row = i + 1, column = 2, padx = PADX, sticky=tk.W)
         yEntry.config(width = 10) # set fixed width. columnconfigure doesn't work because it already fits
 
         zEntry = nb.Entry(frameTop, validate = 'key', validatecommand = vcmd)
-        zEntry.grid(row = i + 1, column = 3, padx = 5, sticky=tk.W)
+        zEntry.grid(row = i + 1, column = 3, padx = PADX, sticky=tk.W)
         zEntry.config(width = 10) # set fixed width. columnconfigure doesn't work because it already fits
 
         clearButton = nb.Button(frameTop, text="Clear", command=partial(clearInputFields, systemEntry, xEntry, yEntry, zEntry))
-        clearButton.grid(row = i + 1, column = 4, padx = 5, sticky=tk.W)
+        clearButton.grid(row = i + 1, column = 4, padx = PADX, sticky=tk.W)
         clearButton.config(width = 7)
 
         edsmButton = nb.Button(frameTop, text="EDSM")
-        edsmButton.grid(row = i + 1, column = 5, padx = 5, sticky=tk.W)
+        edsmButton.grid(row = i + 1, column = 5, padx = (PADX, PADX * 2), sticky=tk.W)
         edsmButton.config(width = 7, command=partial(fillSystemInformationFromEDSM, errorLabel, systemEntry, xEntry, yEntry, zEntry))
 
         this.settingUiEntries.append([systemEntry, xEntry, yEntry, zEntry])
 
-    errorLabel.grid(row = 0, column = 0, sticky=tk.W)
-    nb.Label(frameBottom).grid() # spacer
-    nb.Label(frameBottom, text="You can get coordinates from EDDB or EDSM or enter any valid coordinate.").grid(row = 2, column = 0, sticky=tk.W)
-    nb.Label(frameBottom).grid() # spacer
-    nb.Label(frameBottom, text="Plugin version: {0}".format(VERSION)).grid(row = 4, column = 0, sticky=tk.W)
+    nb.Label(frameTop, text="You can get coordinates from EDDB or EDSM or enter any valid coordinate.").grid(row = 4, column = 0, columnspan = 6, padx = PADX * 2, sticky=tk.W)
+    errorLabel.grid(row = 5, column = 0, columnspan = 6, padx = PADX * 2, sticky=tk.W)
+    ttk.Separator(frameTop, orient=tk.HORIZONTAL).grid(row = 6, columnspan = 6, padx=PADX * 2, pady=8, sticky=tk.EW)
+
+    #nb.Label(frameBottom).grid() # spacer
+    #nb.Label(frameBottom).grid() # spacer
+    nb.Label(frameBottom, text="Plugin version: {0}".format(VERSION)).grid(row = 5, column = 0, padx = PADX, sticky=tk.W)
 
     def fillEntries(s, x, y, z, systemEntry, xEntry, yEntry, zEntry):
         systemEntry.insert(0, s)
