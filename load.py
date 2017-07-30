@@ -23,6 +23,7 @@ import math
 import json
 import Tkinter as tk
 import urllib2
+import webbrowser
 from threading import Thread
 from functools import partial
 from config import config
@@ -93,6 +94,10 @@ def validate(action, index, value_if_allowed,  prior_value, text, validation_typ
     return False
 
 
+def openGithub(event):
+    webbrowser.open_new(r"https://github.com/Thurion/DistanceCalc")
+
+
 def plugin_prefs(parent):
     frame = nb.Frame(parent)
     frameTop = nb.Frame(frame)
@@ -142,7 +147,10 @@ def plugin_prefs(parent):
     ttk.Separator(frameTop, orient=tk.HORIZONTAL).grid(row=6, columnspan=6, padx=PADX*2, pady=8, sticky=tk.EW)
 
     nb.Label(frameBottom, text="Plugin version: {0}".format(VERSION)).grid(row=5, column=0, padx=PADX, sticky=tk.W)
-    nb.Label(frameBottom, text="Open the Github page for this plugin", fg="blue", cursor="hand2").grid(row=6, column=0, padx=PADX, sticky=tk.W)
+    link = nb.Label(frameBottom, text="Open the Github page for this plugin", fg="blue", cursor="hand2")
+    link.grid(row=6, column=0, padx=PADX, sticky=tk.W)
+    link.bind("<Button-1>", openGithub)
+
 
     def fillEntries(s, x, y, z, systemEntry, xEntry, yEntry, zEntry):
         systemEntry.insert(0, s)
