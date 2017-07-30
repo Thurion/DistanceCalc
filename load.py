@@ -95,14 +95,14 @@ def validate(action, index, value_if_allowed,  prior_value, text, validation_typ
 def plugin_prefs(parent):
     frame = nb.Frame(parent)
     frameTop = nb.Frame(frame)
-    frameTop.grid(row = 0, column = 0, sticky=tk.W)
+    frameTop.grid(row=0, column=0, sticky=tk.W)
     frameBottom = nb.Frame(frame)
-    frameBottom.grid(row = 1, column = 0, sticky=tk.SW)
+    frameBottom.grid(row=1, column=0, sticky=tk.SW)
 
-    nb.Label(frameTop, text="Systems").grid(row = 0, column = 0, sticky=tk.EW)
-    nb.Label(frameTop, text="X").grid(row = 0, column = 1, sticky=tk.EW)
-    nb.Label(frameTop, text="Y").grid(row = 0, column = 2, sticky=tk.EW)
-    nb.Label(frameTop, text="Z").grid(row = 0, column = 3, sticky=tk.EW)
+    nb.Label(frameTop, text="Systems").grid(row=0, column=0, sticky=tk.EW)
+    nb.Label(frameTop, text="X").grid(row=0, column=1, sticky=tk.EW)
+    nb.Label(frameTop, text="Y").grid(row=0, column=2, sticky=tk.EW)
+    nb.Label(frameTop, text="Z").grid(row=0, column=3, sticky=tk.EW)
 
     errorLabel = nb.Label(frameTop, text = "")
 
@@ -111,38 +111,37 @@ def plugin_prefs(parent):
 
     for i in range(3):
         systemEntry = nb.Entry(frameTop)
-        systemEntry.grid(row = i + 1, column = 0, padx = (PADX * 2, PADX), sticky=tk.W)
-        systemEntry.config(width = 40) # set fixed width. columnconfigure doesn't work because it already fits
+        systemEntry.grid(row=i+1, column=0, padx=(PADX*2, PADX), sticky=tk.W)
+        systemEntry.config(width=40) # set fixed width. columnconfigure doesn't work because it already fits
 
-        xEntry = nb.Entry(frameTop, validate = 'key', validatecommand = vcmd)
-        xEntry.grid(row = i + 1, column = 1, padx = PADX, sticky=tk.W)
-        xEntry.config(width = 10) # set fixed width. columnconfigure doesn't work because it already fits
+        xEntry = nb.Entry(frameTop, validate='key', validatecommand = vcmd)
+        xEntry.grid(row=i+1, column=1, padx=PADX, sticky=tk.W)
+        xEntry.config(width=10) # set fixed width. columnconfigure doesn't work because it already fits
 
-        yEntry = nb.Entry(frameTop, validate = 'key', validatecommand = vcmd)
-        yEntry.grid(row = i + 1, column = 2, padx = PADX, sticky=tk.W)
-        yEntry.config(width = 10) # set fixed width. columnconfigure doesn't work because it already fits
+        yEntry = nb.Entry(frameTop, validate='key', validatecommand = vcmd)
+        yEntry.grid(row=i+1, column=2, padx=PADX, sticky=tk.W)
+        yEntry.config(width=10) # set fixed width. columnconfigure doesn't work because it already fits
 
-        zEntry = nb.Entry(frameTop, validate = 'key', validatecommand = vcmd)
-        zEntry.grid(row = i + 1, column = 3, padx = PADX, sticky=tk.W)
-        zEntry.config(width = 10) # set fixed width. columnconfigure doesn't work because it already fits
+        zEntry = nb.Entry(frameTop, validate='key', validatecommand = vcmd)
+        zEntry.grid(row=i+1, column=3, padx=PADX, sticky=tk.W)
+        zEntry.config(width=10) # set fixed width. columnconfigure doesn't work because it already fits
 
         clearButton = nb.Button(frameTop, text="Clear", command=partial(clearInputFields, systemEntry, xEntry, yEntry, zEntry))
-        clearButton.grid(row = i + 1, column = 4, padx = PADX, sticky=tk.W)
-        clearButton.config(width = 7)
+        clearButton.grid(row=i+1, column=4, padx=PADX, sticky=tk.W)
+        clearButton.config(width=7)
 
         edsmButton = nb.Button(frameTop, text="EDSM")
-        edsmButton.grid(row = i + 1, column = 5, padx = (PADX, PADX * 2), sticky=tk.W)
-        edsmButton.config(width = 7, command=partial(fillSystemInformationFromEDSM, errorLabel, systemEntry, xEntry, yEntry, zEntry))
+        edsmButton.grid(row=i+1, column=5, padx=(PADX, PADX*2), sticky=tk.W)
+        edsmButton.config(width=7, command=partial(fillSystemInformationFromEDSM, errorLabel, systemEntry, xEntry, yEntry, zEntry))
 
         this.settingUiEntries.append([systemEntry, xEntry, yEntry, zEntry])
 
-    errorLabel.grid(row = 4, column = 0, columnspan = 6, padx = PADX * 2, sticky=tk.W)
-    nb.Label(frameTop, text="You can get coordinates from EDDB or EDSM or enter any valid coordinate.").grid(row = 5, column = 0, columnspan = 6, padx = PADX * 2, sticky=tk.W)
-    ttk.Separator(frameTop, orient=tk.HORIZONTAL).grid(row = 6, columnspan = 6, padx=PADX * 2, pady=8, sticky=tk.EW)
+    errorLabel.grid(row=4, column=0, columnspan=6, padx=PADX*2, sticky=tk.W)
+    nb.Label(frameTop, text="You can get coordinates from EDDB or EDSM or enter any valid coordinate.").grid(row=5, column=0, columnspan=6, padx=PADX*2, sticky=tk.W)
+    ttk.Separator(frameTop, orient=tk.HORIZONTAL).grid(row=6, columnspan=6, padx=PADX*2, pady=8, sticky=tk.EW)
 
-    #nb.Label(frameBottom).grid() # spacer
-    #nb.Label(frameBottom).grid() # spacer
-    nb.Label(frameBottom, text="Plugin version: {0}".format(VERSION)).grid(row = 5, column = 0, padx = PADX, sticky=tk.W)
+    nb.Label(frameBottom, text="Plugin version: {0}".format(VERSION)).grid(row=5, column=0, padx=PADX, sticky=tk.W)
+    nb.Label(frameBottom, text="Open the Github page for this plugin", fg="blue", cursor="hand2").grid(row=6, column=0, padx=PADX, sticky=tk.W)
 
     def fillEntries(s, x, y, z, systemEntry, xEntry, yEntry, zEntry):
         systemEntry.insert(0, s)
@@ -173,9 +172,9 @@ def updateUi():
     for (system, distance) in this.distanceLabels:
         if len(this.distances) >= row + 1:
             s = this.distances[row]
-            system.grid(row = row, column = 0, sticky=tk.W)
+            system.grid(row=row, column=0, sticky=tk.W)
             system["text"] =  "Distance {0}:".format(s["system"])
-            distance.grid(row = row, column = 1, sticky=tk.W)
+            distance.grid(row=row, column=1, sticky=tk.W)
             distance["text"] = "? Ly"
         else:
             system.grid_remove()
