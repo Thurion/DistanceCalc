@@ -120,6 +120,14 @@ def resetTotalTravelledDistance():
     this.distanceTotal = 0.0
 
 
+def setStateRadioButtons(travelledSessionEdmc, travelledSessionElite):
+    if this.travelledSessionOption.get() == 1:
+        travelledSessionEdmc["state"] = "normal"
+        travelledSessionElite["state"] = "normal"
+    else:
+        travelledSessionEdmc["state"] = "disabled"
+        travelledSessionElite["state"] = "disabled"
+
 def plugin_prefs(parent):
     frame = nb.Frame(parent)
     frameTop = nb.Frame(frame)
@@ -190,6 +198,9 @@ def plugin_prefs(parent):
     travelledSessionElite = nb.Radiobutton(frameBottom, variable=travelledSessionSelected, value=1, text="Elite session")
     travelledSessionElite.var = travelledSessionSelected
     travelledSessionElite.grid(row=4, column=0, padx=PADX*4, sticky=tk.W)
+
+    setStateRadioButtons(travelledSessionEdmc, travelledSessionElite)
+    travelledSession.config(command=partial(setStateRadioButtons, travelledSessionEdmc, travelledSessionElite))
     
     nb.Label(frameBottom).grid(row=5) # spacer
     nb.Label(frameBottom).grid(row=6) # spacer
