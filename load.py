@@ -30,7 +30,7 @@ from l10n import Locale
 from config import config
 import myNotebook as nb
 
-VERSION = "1.20"
+VERSION = "1.21"
 PADX = 5
 WIDTH = 10
 
@@ -71,9 +71,9 @@ def fillSystemInformationFromEDSM(label, systemEntry, xEntry, yEntry, zEntry):
         if "name" in edsmJson and "coords" in edsmJson:
             clearInputFields(systemEntry, xEntry, yEntry, zEntry)
             systemEntry.insert(0, edsmJson["name"])
-            xEntry.insert(0, edsmJson["coords"]["x"])
-            yEntry.insert(0, edsmJson["coords"]["y"])
-            zEntry.insert(0, edsmJson["coords"]["z"])
+            xEntry.insert(0, Locale.stringFromNumber(edsmJson["coords"]["x"]))
+            yEntry.insert(0, Locale.stringFromNumber(edsmJson["coords"]["y"]))
+            zEntry.insert(0, Locale.stringFromNumber(edsmJson["coords"]["z"]))
             label["text"] = "Coordinates filled in for system {0}".format(edsmJson["name"])
             label.config(foreground="dark green")
         else:
