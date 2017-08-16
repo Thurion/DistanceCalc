@@ -18,19 +18,20 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 
 import sys
-import ttk
 import math
 import json
-import Tkinter as tk
 import urllib2
-import webbrowser
 from threading import Thread
 from functools import partial
-from l10n import Locale
-from config import config
-import myNotebook as nb
 
-VERSION = "1.21"
+import Tkinter as tk
+import ttk
+from config import config
+from ttkHyperlinkLabel import HyperlinkLabel
+import myNotebook as nb
+from l10n import Locale
+
+VERSION = "1.22"
 PADX = 5
 WIDTH = 10
 
@@ -101,10 +102,6 @@ def validate(action, index, value_if_allowed,  prior_value, text, validation_typ
         except ValueError:
             return False
     return False
-
-
-def openGithub(event):
-    webbrowser.open_new(r"https://github.com/Thurion/DistanceCalc")
 
 
 def getSettingsTravelled():
@@ -206,9 +203,7 @@ def plugin_prefs(parent):
     nb.Label(frameBottom).grid(row=5) # spacer
     nb.Label(frameBottom).grid(row=6) # spacer
     nb.Label(frameBottom, text="Plugin version: {0}".format(VERSION)).grid(row=7, column=0, padx=PADX, sticky=tk.W)
-    link = nb.Label(frameBottom, text="Open the Github page for this plugin", fg="blue", cursor="hand2")
-    link.grid(row=8, column=0, padx=PADX, sticky=tk.W)
-    link.bind("<Button-1>", openGithub)
+    HyperlinkLabel(frame, text="Open the Github page for this plugin", background=nb.Label().cget("background"), url="https://github.com/Thurion/DistanceCalc/", underline=True).grid(row=8, column=0, padx=PADX, sticky=tk.W)
 
     def fillEntries(s, x, y, z, systemEntry, xEntry, yEntry, zEntry):
         systemEntry.insert(0, s)
