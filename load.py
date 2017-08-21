@@ -204,6 +204,7 @@ def plugin_prefs(parent):
     nb.Label(frameBottom).grid(row=6) # spacer
     nb.Label(frameBottom, text="Plugin version: {0}".format(VERSION)).grid(row=7, column=0, padx=PADX, sticky=tk.W)
     HyperlinkLabel(frame, text="Open the Github page for this plugin", background=nb.Label().cget("background"), url="https://github.com/Thurion/DistanceCalc/", underline=True).grid(row=8, column=0, padx=PADX, sticky=tk.W)
+    HyperlinkLabel(frame, text="Get estimated coordinates from EDTS", background=nb.Label().cget("background"), url="http://edts.thargoid.space/", underline=True).grid(row=9, column=0, padx=PADX, sticky=tk.W)
 
     def fillEntries(s, x, y, z, systemEntry, xEntry, yEntry, zEntry):
         systemEntry.insert(0, s)
