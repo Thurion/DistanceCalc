@@ -31,11 +31,12 @@ from ttkHyperlinkLabel import HyperlinkLabel
 import myNotebook as nb
 from l10n import Locale
 
-VERSION = "1.22"
-PADX = 5
-WIDTH = 10
+this = sys.modules[__name__]  # For holding module globals
 
-this = sys.modules[__name__]	# For holding module globals
+this.VERSION = "1.22"
+this.PADX = 5
+this.WIDTH = 10
+
 
 def plugin_start():
     this.distances = json.loads(config.get("DistanceCalc") or "[]")
@@ -61,10 +62,9 @@ def fillSystemInformationFromEDSM(label, systemEntry, xEntry, yEntry, zEntry):
     if systemEntry.get() == "":
         label["text"] = "No system name provided."
         label.config(foreground="red")
-        return # nothing to do here
+        return  # nothing to do here
 
     edsmUrl = "https://www.edsm.net/api-v1/system?systemName={SYSTEM}&showCoordinates=1".format(SYSTEM=urllib2.quote(systemEntry.get()))
-    systemInformation = None
     try:
         url = urllib2.urlopen(edsmUrl, timeout=15)
         response = url.read()
@@ -91,7 +91,7 @@ def fillSystemInformationFromEdmsAsync(label, systemEntry, xEntry, yEntry, zEntr
     t.start()
 
 
-def validate(action, index, value_if_allowed,  prior_value, text, validation_type, trigger_type, widget_name):
+def validate(action, index, value_if_allowed, prior_value, text, validation_type, trigger_type, widget_name):
     if value_if_allowed == "-" or value_if_allowed == "":
         return True
     elif text in "0123456789.," or text == value_if_allowed:
@@ -106,10 +106,10 @@ def validate(action, index, value_if_allowed,  prior_value, text, validation_typ
 
 def getSettingsTravelled():
     settings = config.getint("DistanceCalc_options")
-    settingTotal = settings & 1 # calculate total distance travelled
-    settingSession = (settings >> 1) & 1 # calculate for session only
-    settingSessionOption = (settings >> 2) & 1 # 1 = calculate for ED session; 0 = calculate for EDMC session
-    return (settingTotal, settingSession, settingSessionOption)
+    settingTotal = settings & 1  # calculate total distance travelled
+    settingSession = (settings >> 1) & 1  # calculate for session only
+    settingSessionOption = (settings >> 2) & 1  # 1 = calculate for ED session; 0 = calculate for EDMC session
+    return settingTotal, settingSession, settingSessionOption
 
 
 def resetTotalTravelledDistance():
@@ -139,7 +139,7 @@ def plugin_prefs(parent):
     nb.Label(frameTop, text="Y").grid(row=0, column=2, sticky=tk.EW)
     nb.Label(frameTop, text="Z").grid(row=0, column=3, sticky=tk.EW)
 
-    errorLabel = nb.Label(frameTop, text = "")
+    errorLabel = nb.Label(frameTop, text="")
 
     this.settingUiEntries = list()
     vcmd = (frameTop.register(validate), '%d', '%i', '%P', '%s', '%S', '%v', '%V', '%W')
@@ -147,68 +147,70 @@ def plugin_prefs(parent):
     # create and add fields to enter systems
     for i in range(3):
         systemEntry = nb.Entry(frameTop)
-        systemEntry.grid(row=i+1, column=0, padx=(PADX*2, PADX), sticky=tk.W)
-        systemEntry.config(width=WIDTH*4) # set fixed width. columnconfigure doesn't work because it already fits
+        systemEntry.grid(row=i + 1, column=0, padx=(this.PADX * 2, this.PADX), sticky=tk.W)
+        systemEntry.config(width=this.WIDTH * 4)  # set fixed width. columnconfigure doesn't work because it already fits
 
-        xEntry = nb.Entry(frameTop, validate='key', validatecommand = vcmd)
-        xEntry.grid(row=i+1, column=1, padx=PADX, sticky=tk.W)
-        xEntry.config(width=WIDTH) # set fixed width. columnconfigure doesn't work because it already fits
+        xEntry = nb.Entry(frameTop, validate='key', validatecommand=vcmd)
+        xEntry.grid(row=i + 1, column=1, padx=this.PADX, sticky=tk.W)
+        xEntry.config(width=this.WIDTH)  # set fixed width. columnconfigure doesn't work because it already fits
 
-        yEntry = nb.Entry(frameTop, validate='key', validatecommand = vcmd)
-        yEntry.grid(row=i+1, column=2, padx=PADX, sticky=tk.W)
-        yEntry.config(width=WIDTH) # set fixed width. columnconfigure doesn't work because it already fits
+        yEntry = nb.Entry(frameTop, validate='key', validatecommand=vcmd)
+        yEntry.grid(row=i + 1, column=2, padx=this.PADX, sticky=tk.W)
+        yEntry.config(width=this.WIDTH)  # set fixed width. columnconfigure doesn't work because it already fits
 
-        zEntry = nb.Entry(frameTop, validate='key', validatecommand = vcmd)
-        zEntry.grid(row=i+1, column=3, padx=PADX, sticky=tk.W)
-        zEntry.config(width=WIDTH) # set fixed width. columnconfigure doesn't work because it already fits
+        zEntry = nb.Entry(frameTop, validate='key', validatecommand=vcmd)
+        zEntry.grid(row=i + 1, column=3, padx=this.PADX, sticky=tk.W)
+        zEntry.config(width=this.WIDTH)  # set fixed width. columnconfigure doesn't work because it already fits
 
         clearButton = nb.Button(frameTop, text="Clear", command=partial(clearInputFields, systemEntry, xEntry, yEntry, zEntry))
-        clearButton.grid(row=i+1, column=4, padx=PADX, sticky=tk.W)
+        clearButton.grid(row=i + 1, column=4, padx=this.PADX, sticky=tk.W)
         clearButton.config(width=7)
 
         edsmButton = nb.Button(frameTop, text="EDSM")
-        edsmButton.grid(row=i+1, column=5, padx=(PADX, PADX*2), sticky=tk.W)
+        edsmButton.grid(row=i + 1, column=5, padx=(this.PADX, this.PADX * 2), sticky=tk.W)
         edsmButton.config(width=7, command=partial(fillSystemInformationFromEdmsAsync, errorLabel, systemEntry, xEntry, yEntry, zEntry))
 
         this.settingUiEntries.append([systemEntry, xEntry, yEntry, zEntry])
 
     # EDSM result label and information about what coordinates can be entered
-    errorLabel.grid(row=4, column=0, columnspan=6, padx=PADX*2, sticky=tk.W)
-    nb.Label(frameTop, text="You can get coordinates from EDDB or EDSM or enter any valid coordinate.").grid(row=5, column=0, columnspan=6, padx=PADX*2, sticky=tk.W)
-    ttk.Separator(frameTop, orient=tk.HORIZONTAL).grid(row=6, columnspan=6, padx=PADX*2, pady=8, sticky=tk.EW)
+    errorLabel.grid(row=4, column=0, columnspan=6, padx=this.PADX * 2, sticky=tk.W)
+    nb.Label(frameTop, text="You can get coordinates from EDDB or EDSM or enter any valid coordinate.").grid(row=5, column=0, columnspan=6, padx=this.PADX * 2,
+                                                                                                             sticky=tk.W)
+    ttk.Separator(frameTop, orient=tk.HORIZONTAL).grid(row=6, columnspan=6, padx=this.PADX * 2, pady=8, sticky=tk.EW)
 
     # total travelled distance
     travelledTotal = nb.Checkbutton(frameBottom, variable=travelledTotalOption, text="Calculate total travelled distance")
     travelledTotal.var = travelledTotalOption
-    travelledTotal.grid(row=0, column=0, padx=PADX*2, sticky=tk.W)
+    travelledTotal.grid(row=0, column=0, padx=this.PADX * 2, sticky=tk.W)
     resetButton = nb.Button(frameBottom, text="Reset", command=resetTotalTravelledDistance)
-    resetButton.grid(row=1, column=0, padx=PADX*4, pady=5, sticky=tk.W)
-    
+    resetButton.grid(row=1, column=0, padx=this.PADX * 4, pady=5, sticky=tk.W)
+
     travelledSession = nb.Checkbutton(frameBottom, variable=travelledSessionOption, text="Calculate travelled distance for current session")
     travelledSession.var = travelledSessionOption
-    travelledSession.grid(row=2, column=0, padx=PADX*2, sticky=tk.W)
-    
+    travelledSession.grid(row=2, column=0, padx=this.PADX * 2, sticky=tk.W)
+
     # radio button value: 1 = calculate for ED session; 0 = calculate for EDMC session
     travelledSessionEdmc = nb.Radiobutton(frameBottom, variable=travelledSessionSelected, value=0, text="EDMC session")
     travelledSessionEdmc.var = travelledSessionSelected
-    travelledSessionEdmc.grid(row=3, column=0, padx=PADX*4, sticky=tk.W)
-    
+    travelledSessionEdmc.grid(row=3, column=0, padx=this.PADX * 4, sticky=tk.W)
+
     travelledSessionElite = nb.Radiobutton(frameBottom, variable=travelledSessionSelected, value=1, text="Elite session")
     travelledSessionElite.var = travelledSessionSelected
-    travelledSessionElite.grid(row=4, column=0, padx=PADX*4, sticky=tk.W)
+    travelledSessionElite.grid(row=4, column=0, padx=this.PADX * 4, sticky=tk.W)
 
     setStateRadioButtons(travelledSessionEdmc, travelledSessionElite)
     travelledSession.config(command=partial(setStateRadioButtons, travelledSessionEdmc, travelledSessionElite))
-    
-    nb.Label(frameBottom).grid(row=5) # spacer
-    nb.Label(frameBottom).grid(row=6) # spacer
-    nb.Label(frameBottom, text="Plugin version: {0}".format(VERSION)).grid(row=7, column=0, padx=PADX, sticky=tk.W)
-    HyperlinkLabel(frame, text="Open the Github page for this plugin", background=nb.Label().cget("background"), url="https://github.com/Thurion/DistanceCalc/", underline=True).grid(row=8, column=0, padx=PADX, sticky=tk.W)
-    HyperlinkLabel(frame, text="Get estimated coordinates from EDTS", background=nb.Label().cget("background"), url="http://edts.thargoid.space/", underline=True).grid(row=9, column=0, padx=PADX, sticky=tk.W)
+
+    nb.Label(frameBottom).grid(row=5)  # spacer
+    nb.Label(frameBottom).grid(row=6)  # spacer
+    nb.Label(frameBottom, text="Plugin version: {0}".format(this.VERSION)).grid(row=7, column=0, padx=this.PADX, sticky=tk.W)
+    HyperlinkLabel(frame, text="Open the Github page for this plugin", background=nb.Label().cget("background"), url="https://github.com/Thurion/DistanceCalc/",
+                   underline=True).grid(row=8, column=0, padx=this.PADX, sticky=tk.W)
+    HyperlinkLabel(frame, text="Get estimated coordinates from EDTS", background=nb.Label().cget("background"), url="http://edts.thargoid.space/", underline=True)\
+        .grid(row=9, column=0, padx=this.PADX, sticky=tk.W)
 
     def fillEntries(s, x, y, z, systemEntry, xEntry, yEntry, zEntry):
         systemEntry.insert(0, s)
-        newx = Locale.stringFromNumber(x)
         xEntry.insert(0, Locale.stringFromNumber(x))
         yEntry.insert(0, Locale.stringFromNumber(y))
         zEntry.insert(0, Locale.stringFromNumber(z))
@@ -223,14 +225,14 @@ def plugin_prefs(parent):
     return frame
 
 
-def updateUi():  
+def updateUi():
     # labels for distances to systems
     row = 0
     for (system, distance) in this.distanceLabels:
         if len(this.distances) >= row + 1:
             s = this.distances[row]
             system.grid(row=row, column=0, sticky=tk.W)
-            system["text"] =  "Distance {0}:".format(s["system"])
+            system["text"] = "Distance {0}:".format(s["system"])
             distance.grid(row=row, column=1, sticky=tk.W)
             distance["text"] = "? Ly"
             row += 1
@@ -240,7 +242,6 @@ def updateUi():
 
     # labels for total travelled distance
     settingTotal, settingSession, settingSessionOption = getSettingsTravelled()
-    description, distance = this.travelledLabels[0]
 
     for i in range(len(this.travelledLabels)):
         description, distance = this.travelledLabels[i]
@@ -255,7 +256,7 @@ def updateUi():
             distance.grid_remove()
 
     if row == 0:
-        this.emptyFrame.grid(row = 0)
+        this.emptyFrame.grid(row=0)
     else:
         this.emptyFrame.grid_remove()
 
@@ -275,7 +276,7 @@ def prefs_changed():
                 d["y"] = Locale.numberFromString(yText.strip())
                 d["z"] = Locale.numberFromString(zText.strip())
                 this.distances.append(d)
-            except: # error while parsing the numbers
+            except:  # error while parsing the numbers
                 sys.stderr.write("DistanceCalc: Error while parsing the coordinates for {0}".format(systemText.strip()))
                 continue
     config.set("DistanceCalc", json.dumps(this.distances))
@@ -323,7 +324,6 @@ def updateDistances():
     distance["text"] = "{0} Ly".format(Locale.stringFromNumber(this.distanceSession, 2))
 
 
-
 def journal_entry(cmdr, system, station, entry, state):
     if entry["event"] == "FSDJump" or entry["event"] == "Location":
         # We arrived at a new system!
@@ -340,4 +340,3 @@ def journal_entry(cmdr, system, station, entry, state):
     if entry["event"] == "LoadGame" and this.travelledSessionOption.get() and this.travelledSessionSelected.get():
         this.distanceSession = 0.0
         updateDistances()
-
