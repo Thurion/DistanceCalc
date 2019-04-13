@@ -86,7 +86,7 @@ def fillSystemInformationFromEDSM(label, systemEntry, xEntry, yEntry, zEntry):
         sys.stderr.write("DistanceCalc: Could not get system information for {0} from EDSM".format(systemEntry.get()))
 
 
-def fillSystemInformationFromEdmsAsync(label, systemEntry, xEntry, yEntry, zEntry):
+def fillSystemInformationFromEdsmAsync(label, systemEntry, xEntry, yEntry, zEntry, edsmButton):
     t = Thread(name="EDSM_caller_{0}".format(label), target=fillSystemInformationFromEDSM, args=(label, systemEntry, xEntry, yEntry, zEntry))
     t.start()
 
@@ -168,7 +168,7 @@ def plugin_prefs(parent):
 
         edsmButton = nb.Button(frameTop, text="EDSM")
         edsmButton.grid(row=i + 1, column=5, padx=(this.PADX, this.PADX * 2), sticky=tk.W)
-        edsmButton.config(width=7, command=partial(fillSystemInformationFromEdmsAsync, errorLabel, systemEntry, xEntry, yEntry, zEntry))
+        edsmButton.config(width=7, command=partial(fillSystemInformationFromEdsmAsync, errorLabel, systemEntry, xEntry, yEntry, zEntry))
 
         this.settingUiEntries.append([systemEntry, xEntry, yEntry, zEntry])
 
