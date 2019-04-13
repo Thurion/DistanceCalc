@@ -38,6 +38,31 @@ this.PADX = 5
 this.WIDTH = 10
 
 
+class SettingsUiElements(object):
+    def __init__(self, systemEntry, xEntry, yEntry, zEntry, edsmButton, hasData=False, success=False, x=0, y=0, z=0, systemName="", errorText=""):
+        self.systemEntry = systemEntry
+        self.xEntry = xEntry
+        self.yEntry = yEntry
+        self.zEntry = zEntry
+        self.edsmButton = edsmButton
+        self.hasData = hasData
+        self.success = success
+        self.x = x
+        self.y = y
+        self.z = z
+        self.systemName = systemName
+        self.statusText = errorText
+
+    def resetResponseData(self):
+        self.hasData = False
+        self.success = False
+        self.x = 0
+        self.y = 0
+        self.z = 0
+        self.systemName = ""
+        self.statusText = ""
+
+
 def plugin_start():
     this.distances = json.loads(config.get("DistanceCalc") or "[]")
     this.coordinates = None
@@ -47,6 +72,8 @@ def plugin_start():
     this.travelledTotalOption = tk.IntVar(value=a and 1)
     this.travelledSessionOption = tk.IntVar(value=b and 1)
     this.travelledSessionSelected = tk.IntVar(value=c and 1)
+    this.frame = None
+    this.errorLabel = None
     return 'DistanceCalc'
 
 
@@ -57,38 +84,41 @@ def clearInputFields(system, x, y, z):
     z.delete(0, tk.END)
 
 
-def fillSystemInformationFromEDSM(label, systemEntry, xEntry, yEntry, zEntry):
-    # TODO fix possible issues because of thread-safety
-    if systemEntry.get() == "":
-        label["text"] = "No system name provided."
-        label.config(foreground="red")
-        return  # nothing to do here
+def getSystemInformationFromEDSM(buttonNumber, systemName):
+    # Don't access UI elements from here because of thread safety. Use the regular (int, str, bool) variables and fire an event
+    settingsUiElements = this.settingsUiElements[buttonNumber]
+    settingsUiElements.resetResponseData()
 
-    edsmUrl = "https://www.edsm.net/api-v1/system?systemName={SYSTEM}&showCoordinates=1".format(SYSTEM=urllib2.quote(systemEntry.get()))
+    edsmUrl = "https://www.edsm.net/api-v1/system?systemName={SYSTEM}&showCoordinates=1".format(SYSTEM=urllib2.quote(systemName))
     try:
         url = urllib2.urlopen(edsmUrl, timeout=15)
         response = url.read()
         edsmJson = json.loads(response)
         if "name" in edsmJson and "coords" in edsmJson:
-            clearInputFields(systemEntry, xEntry, yEntry, zEntry)
-            systemEntry.insert(0, edsmJson["name"])
-            xEntry.insert(0, Locale.stringFromNumber(edsmJson["coords"]["x"]))
-            yEntry.insert(0, Locale.stringFromNumber(edsmJson["coords"]["y"]))
-            zEntry.insert(0, Locale.stringFromNumber(edsmJson["coords"]["z"]))
-            label["text"] = "Coordinates filled in for system {0}".format(edsmJson["name"])
-            label.config(foreground="dark green")
+            settingsUiElements.success = True
+            settingsUiElements.systemName = edsmJson["name"]
+            settingsUiElements.x = edsmJson["coords"]["x"]
+            settingsUiElements.y = edsmJson["coords"]["y"]
+            settingsUiElements.z = edsmJson["coords"]["z"]
+            settingsUiElements.statusText = "Coordinates filled in for system {0}".format(edsmJson["name"])
         else:
-            label["text"] = "Could not get system information for {0} from EDSM".format(systemEntry.get())
-            label.config(foreground="red")
+            settingsUiElements.statusText = "Could not get system information for {0} from EDSM".format(systemName)
     except:
-        label["text"] = "Could not get system information for {0} from EDSM".format(systemEntry.get())
-        label.config(foreground="red")
-        sys.stderr.write("DistanceCalc: Could not get system information for {0} from EDSM".format(systemEntry.get()))
+        settingsUiElements.statusText = "Could not get system information for {0} from EDSM".format(systemName)
+        sys.stderr.write("DistanceCalc: Could not get system information for {0} from EDSM".format(systemName))
+    finally:
+        settingsUiElements.hasData = True
+        this.frame.event_generate("<<DistanceCalc-EDSM-Response>>", when="tail")
 
 
-def fillSystemInformationFromEdsmAsync(label, systemEntry, xEntry, yEntry, zEntry, edsmButton):
-    t = Thread(name="EDSM_caller_{0}".format(label), target=fillSystemInformationFromEDSM, args=(label, systemEntry, xEntry, yEntry, zEntry))
-    t.start()
+def fillSystemInformationFromEdsmAsync(buttonNumber, systemEntry):
+    if systemEntry.get() == "":
+        this.errorLabel["text"] = "No system name provided."
+        this.errorLabel.config(foreground="red")
+    else:
+        this.settingsUiElements[buttonNumber].edsmButton["state"] = tk.DISABLED
+        t = Thread(name="EDSM_caller_{0}".format(buttonNumber), target=getSystemInformationFromEDSM, args=(buttonNumber, systemEntry.get()))
+        t.start()
 
 
 def validate(action, index, value_if_allowed, prior_value, text, validation_type, trigger_type, widget_name):
@@ -126,11 +156,31 @@ def setStateRadioButtons(travelledSessionEdmc, travelledSessionElite):
         travelledSessionElite["state"] = "disabled"
 
 
+def updatePrefsUI(event=None):
+    for settingsUiElement in this.settingsUiElements:
+        if settingsUiElement.hasData:
+            if settingsUiElement.success:
+                clearInputFields(settingsUiElement.systemEntry, settingsUiElement.xEntry, settingsUiElement.yEntry, settingsUiElement.zEntry)
+                settingsUiElement.systemEntry.insert(0, settingsUiElement.systemName)
+                settingsUiElement.xEntry.insert(0, Locale.stringFromNumber(settingsUiElement.x))
+                settingsUiElement.yEntry.insert(0, Locale.stringFromNumber(settingsUiElement.y))
+                settingsUiElement.zEntry.insert(0, Locale.stringFromNumber(settingsUiElement.z))
+                this.errorLabel["text"] = settingsUiElement.statusText
+                this.errorLabel.config(foreground="dark green")
+            else:
+                this.errorLabel["text"] = settingsUiElement.statusText
+                this.errorLabel.config(foreground="red")
+
+            settingsUiElement.edsmButton["state"] = tk.NORMAL
+            settingsUiElement.resetResponseData()
+
+
 def plugin_prefs(parent):
-    frame = nb.Frame(parent)
-    frameTop = nb.Frame(frame)
+    this.frame = nb.Frame(parent)
+    this.frame.bind_all("<<DistanceCalc-EDSM-Response>>", updatePrefsUI)
+    frameTop = nb.Frame(this.frame)
     frameTop.grid(row=0, column=0, sticky=tk.W)
-    frameBottom = nb.Frame(frame)
+    frameBottom = nb.Frame(this.frame)
     frameBottom.grid(row=1, column=0, sticky=tk.SW)
 
     # headline
@@ -139,9 +189,9 @@ def plugin_prefs(parent):
     nb.Label(frameTop, text="Y").grid(row=0, column=2, sticky=tk.EW)
     nb.Label(frameTop, text="Z").grid(row=0, column=3, sticky=tk.EW)
 
-    errorLabel = nb.Label(frameTop, text="")
+    this.errorLabel = nb.Label(frameTop, text="")
 
-    this.settingUiEntries = list()
+    this.settingsUiElements = list()
     vcmd = (frameTop.register(validate), '%d', '%i', '%P', '%s', '%S', '%v', '%V', '%W')
 
     # create and add fields to enter systems
@@ -168,12 +218,12 @@ def plugin_prefs(parent):
 
         edsmButton = nb.Button(frameTop, text="EDSM")
         edsmButton.grid(row=i + 1, column=5, padx=(this.PADX, this.PADX * 2), sticky=tk.W)
-        edsmButton.config(width=7, command=partial(fillSystemInformationFromEdsmAsync, errorLabel, systemEntry, xEntry, yEntry, zEntry))
+        edsmButton.config(width=7, command=partial(fillSystemInformationFromEdsmAsync, i, systemEntry))
 
-        this.settingUiEntries.append([systemEntry, xEntry, yEntry, zEntry])
+        this.settingsUiElements.append(SettingsUiElements(systemEntry, xEntry, yEntry, zEntry, edsmButton))
 
     # EDSM result label and information about what coordinates can be entered
-    errorLabel.grid(row=4, column=0, columnspan=6, padx=this.PADX * 2, sticky=tk.W)
+    this.errorLabel.grid(row=4, column=0, columnspan=6, padx=this.PADX * 2, sticky=tk.W)
     nb.Label(frameTop, text="You can get coordinates from EDDB or EDSM or enter any valid coordinate.").grid(row=5, column=0, columnspan=6, padx=this.PADX * 2,
                                                                                                              sticky=tk.W)
     ttk.Separator(frameTop, orient=tk.HORIZONTAL).grid(row=6, columnspan=6, padx=this.PADX * 2, pady=8, sticky=tk.EW)
@@ -204,9 +254,9 @@ def plugin_prefs(parent):
     nb.Label(frameBottom).grid(row=5)  # spacer
     nb.Label(frameBottom).grid(row=6)  # spacer
     nb.Label(frameBottom, text="Plugin version: {0}".format(this.VERSION)).grid(row=7, column=0, padx=this.PADX, sticky=tk.W)
-    HyperlinkLabel(frame, text="Open the Github page for this plugin", background=nb.Label().cget("background"), url="https://github.com/Thurion/DistanceCalc/",
+    HyperlinkLabel(this.frame, text="Open the Github page for this plugin", background=nb.Label().cget("background"), url="https://github.com/Thurion/DistanceCalc/",
                    underline=True).grid(row=8, column=0, padx=this.PADX, sticky=tk.W)
-    HyperlinkLabel(frame, text="Get estimated coordinates from EDTS", background=nb.Label().cget("background"), url="http://edts.thargoid.space/", underline=True)\
+    HyperlinkLabel(this.frame, text="Get estimated coordinates from EDTS", background=nb.Label().cget("background"), url="http://edts.thargoid.space/", underline=True)\
         .grid(row=9, column=0, padx=this.PADX, sticky=tk.W)
 
     def fillEntries(s, x, y, z, systemEntry, xEntry, yEntry, zEntry):
@@ -218,14 +268,14 @@ def plugin_prefs(parent):
     row = 0
     if len(this.distances) > 0:
         for var in this.distances:
-            systemEntry, xEntry, yEntry, zEntry = this.settingUiEntries[row]
-            fillEntries(var["system"], var["x"], var["y"], var["z"], systemEntry, xEntry, yEntry, zEntry)
+            settingsUiElement = this.settingsUiElements[row]
+            fillEntries(var["system"], var["x"], var["y"], var["z"], settingsUiElement.systemEntry, settingsUiElement.xEntry, settingsUiElement.yEntry, settingsUiElement.zEntry)
             row += 1
 
-    return frame
+    return this.frame
 
 
-def updateUi():
+def updateMainUi():
     # labels for distances to systems
     row = 0
     for (system, distance) in this.distanceLabels:
@@ -263,11 +313,11 @@ def updateUi():
 
 def prefs_changed():
     this.distances = list()
-    for (system, x, y, z) in this.settingUiEntries:
-        systemText = system.get()
-        xText = x.get()
-        yText = y.get()
-        zText = z.get()
+    for settingsUiElement in this.settingsUiElements:
+        systemText = settingsUiElement.systemEntry.get()
+        xText = settingsUiElement.xEntry.get()
+        yText = settingsUiElement.yEntry.get()
+        zText = settingsUiElement.zEntry.get()
         if systemText and xText and yText and zText:
             try:
                 d = dict()
@@ -284,7 +334,7 @@ def prefs_changed():
     settings = this.travelledTotalOption.get() | (this.travelledSessionOption.get() << 1) | (this.travelledSessionSelected.get() << 2)
     config.set("DistanceCalc_options", settings)
 
-    updateUi()
+    updateMainUi()
     updateDistances()
 
 
@@ -300,7 +350,7 @@ def plugin_app(parent):
     for i in range(2):
         this.travelledLabels.append((tk.Label(frame), tk.Label(frame)))
 
-    updateUi()
+    updateMainUi()
     return frame
 
 
