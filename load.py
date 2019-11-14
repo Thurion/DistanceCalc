@@ -17,23 +17,34 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 
+# Added Python 2 and 3 compatibility with the help of Amiganer
 import sys
 import math
 import json
-import urllib2
 from threading import Thread
 from functools import partial
-
-import Tkinter as tk
-import ttk
 from config import config
 from ttkHyperlinkLabel import HyperlinkLabel
 import myNotebook as nb
 from l10n import Locale
 
+if sys.version_info >= (3, 5):
+    # Python 3
+    from urllib.parse import quote
+    from urllib.request import urlopen
+    import tkinter as tk
+    import tkinter.ttk as ttk
+else:
+    # Python 2
+    from urllib2 import quote
+    from urllib2 import urlopen
+    import Tkinter as tk
+    import ttk
+
+
 this = sys.modules[__name__]  # For holding module globals
 
-this.VERSION = "1.23"
+this.VERSION = "1.24"
 this.PADX = 5
 this.WIDTH = 10
 
@@ -89,9 +100,9 @@ def getSystemInformationFromEDSM(buttonNumber, systemName):
     settingsUiElements = this.settingsUiElements[buttonNumber]
     settingsUiElements.resetResponseData()
 
-    edsmUrl = "https://www.edsm.net/api-v1/system?systemName={SYSTEM}&showCoordinates=1".format(SYSTEM=urllib2.quote(systemName))
+    edsmUrl = "https://www.edsm.net/api-v1/system?systemName={SYSTEM}&showCoordinates=1".format(SYSTEM=quote(systemName))
     try:
-        url = urllib2.urlopen(edsmUrl, timeout=15)
+        url = urlopen(edsmUrl, timeout=15)
         response = url.read()
         edsmJson = json.loads(response)
         if "name" in edsmJson and "coords" in edsmJson:
@@ -175,7 +186,7 @@ def updatePrefsUI(event=None):
             settingsUiElement.resetResponseData()
 
 
-def plugin_prefs(parent):
+def plugin_prefs(parent, cmdr, is_beta):
     this.frame = nb.Frame(parent)
     this.frame.bind_all("<<DistanceCalc-EDSM-Response>>", updatePrefsUI)
     frameTop = nb.Frame(this.frame)
@@ -229,23 +240,23 @@ def plugin_prefs(parent):
     ttk.Separator(frameTop, orient=tk.HORIZONTAL).grid(row=6, columnspan=6, padx=this.PADX * 2, pady=8, sticky=tk.EW)
 
     # total travelled distance
-    travelledTotal = nb.Checkbutton(frameBottom, variable=travelledTotalOption, text="Calculate total travelled distance")
-    travelledTotal.var = travelledTotalOption
+    travelledTotal = nb.Checkbutton(frameBottom, variable=this.travelledTotalOption, text="Calculate total travelled distance")
+    travelledTotal.var = this.travelledTotalOption
     travelledTotal.grid(row=0, column=0, padx=this.PADX * 2, sticky=tk.W)
     resetButton = nb.Button(frameBottom, text="Reset", command=resetTotalTravelledDistance)
     resetButton.grid(row=1, column=0, padx=this.PADX * 4, pady=5, sticky=tk.W)
 
-    travelledSession = nb.Checkbutton(frameBottom, variable=travelledSessionOption, text="Calculate travelled distance for current session")
-    travelledSession.var = travelledSessionOption
+    travelledSession = nb.Checkbutton(frameBottom, variable=this.travelledSessionOption, text="Calculate travelled distance for current session")
+    travelledSession.var = this.travelledSessionOption
     travelledSession.grid(row=2, column=0, padx=this.PADX * 2, sticky=tk.W)
 
     # radio button value: 1 = calculate for ED session; 0 = calculate for EDMC session
-    travelledSessionEdmc = nb.Radiobutton(frameBottom, variable=travelledSessionSelected, value=0, text="EDMC session")
-    travelledSessionEdmc.var = travelledSessionSelected
+    travelledSessionEdmc = nb.Radiobutton(frameBottom, variable=this.travelledSessionSelected, value=0, text="EDMC session")
+    travelledSessionEdmc.var = this.travelledSessionSelected
     travelledSessionEdmc.grid(row=3, column=0, padx=this.PADX * 4, sticky=tk.W)
 
-    travelledSessionElite = nb.Radiobutton(frameBottom, variable=travelledSessionSelected, value=1, text="Elite session")
-    travelledSessionElite.var = travelledSessionSelected
+    travelledSessionElite = nb.Radiobutton(frameBottom, variable=this.travelledSessionSelected, value=1, text="Elite session")
+    travelledSessionElite.var = this.travelledSessionSelected
     travelledSessionElite.grid(row=4, column=0, padx=this.PADX * 4, sticky=tk.W)
 
     setStateRadioButtons(travelledSessionEdmc, travelledSessionElite)
@@ -311,7 +322,7 @@ def updateMainUi():
         this.emptyFrame.grid_remove()
 
 
-def prefs_changed():
+def prefs_changed(cmdr, is_beta):
     this.distances = list()
     for settingsUiElement in this.settingsUiElements:
         systemText = settingsUiElement.systemEntry.get()
@@ -326,7 +337,8 @@ def prefs_changed():
                 d["y"] = Locale.numberFromString(yText.strip())
                 d["z"] = Locale.numberFromString(zText.strip())
                 this.distances.append(d)
-            except:  # error while parsing the numbers
+            except Exception as e:  # error while parsing the numbers
+                print(e)
                 sys.stderr.write("DistanceCalc: Error while parsing the coordinates for {0}".format(systemText.strip()))
                 continue
     config.set("DistanceCalc", json.dumps(this.distances))
@@ -354,6 +366,10 @@ def plugin_app(parent):
     return frame
 
 
+def plugin_start3(plugin_dir):
+    return plugin_start()
+
+
 def calculateDistance(x1, y1, z1, x2, y2, z2):
     return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2 + (z1 - z2) ** 2)
 
@@ -374,7 +390,7 @@ def updateDistances():
     distance["text"] = "{0} Ly".format(Locale.stringFromNumber(this.distanceSession, 2))
 
 
-def journal_entry(cmdr, system, station, entry, state):
+def journal_entry(cmdr, is_beta, system, station, entry, state):
     if entry["event"] == "FSDJump" or entry["event"] == "Location":
         # We arrived at a new system!
         if "StarPos" in entry:
