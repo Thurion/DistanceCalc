@@ -28,18 +28,18 @@ from ttkHyperlinkLabel import HyperlinkLabel
 import myNotebook as nb
 from l10n import Locale
 
-if sys.version_info >= (3, 5):
-    # Python 3
-    from urllib.parse import quote
-    from urllib.request import urlopen
-    import tkinter as tk
-    import tkinter.ttk as ttk
-else:
+try:
     # Python 2
     from urllib2 import quote
     from urllib2 import urlopen
     import Tkinter as tk
     import ttk
+except ModuleNotFoundError:
+    # Python 3
+    from urllib.parse import quote
+    from urllib.request import urlopen
+    import tkinter as tk
+    import tkinter.ttk as ttk
 
 
 this = sys.modules[__name__]  # For holding module globals
