@@ -391,7 +391,7 @@ def updateDistances():
 
 
 def journal_entry(cmdr, is_beta, system, station, entry, state):
-    if entry["event"] == "FSDJump" or entry["event"] == "Location" or entry["event"] == "CarrierJump":
+    if entry["event"] in ["FSDJump", "Location", "CarrierJump", "StartUp"]:
         # We arrived at a new system!
         if "StarPos" in entry:
             this.coordinates = tuple(entry["StarPos"])
