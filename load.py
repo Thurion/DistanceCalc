@@ -17,29 +17,18 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 
-# Added Python 2 and 3 compatibility with the help of Amiganer
 import sys
 import math
 import json
+import urllib
 from threading import Thread
 from functools import partial
 from config import config
 from ttkHyperlinkLabel import HyperlinkLabel
 import myNotebook as nb
 from l10n import Locale
-
-try:
-    # Python 2
-    from urllib2 import quote
-    from urllib2 import urlopen
-    import Tkinter as tk
-    import ttk
-except ModuleNotFoundError:
-    # Python 3
-    from urllib.parse import quote
-    from urllib.request import urlopen
-    import tkinter as tk
-    import tkinter.ttk as ttk
+import tkinter as tk
+import tkinter.ttk as ttk
 
 
 this = sys.modules[__name__]  # For holding module globals
@@ -74,7 +63,7 @@ class SettingsUiElements(object):
         self.statusText = ""
 
 
-def plugin_start():
+def plugin_start3(plugin_dir):
     this.distances = json.loads(config.get("DistanceCalc") or "[]")
     this.coordinates = None
     this.distanceTotal = float(config.getint("DistanceCalc_travelled") or 0) / 1000.0
@@ -100,9 +89,9 @@ def getSystemInformationFromEDSM(buttonNumber, systemName):
     settingsUiElements = this.settingsUiElements[buttonNumber]
     settingsUiElements.resetResponseData()
 
-    edsmUrl = "https://www.edsm.net/api-v1/system?systemName={SYSTEM}&showCoordinates=1".format(SYSTEM=quote(systemName))
+    edsmUrl = "https://www.edsm.net/api-v1/system?systemName={SYSTEM}&showCoordinates=1".format(SYSTEM=urllib.parse.quote(systemName))
     try:
-        url = urlopen(edsmUrl, timeout=15)
+        url = urllib.request.urlopen(edsmUrl, timeout=15)
         response = url.read()
         edsmJson = json.loads(response)
         if "name" in edsmJson and "coords" in edsmJson:
@@ -364,10 +353,6 @@ def plugin_app(parent):
 
     updateMainUi()
     return frame
-
-
-def plugin_start3(plugin_dir):
-    return plugin_start()
 
 
 def calculateDistance(x1, y1, z1, x2, y2, z2):
