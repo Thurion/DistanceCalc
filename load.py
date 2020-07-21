@@ -78,11 +78,51 @@ def plugin_start3(plugin_dir):
     return 'DistanceCalc'
 
 
-def clearInputFields(system, x, y, z):
-    system.delete(0, tk.END)
-    x.delete(0, tk.END)
-    y.delete(0, tk.END)
-    z.delete(0, tk.END)
+def clearInputFields(index):
+    settingsUiElements = this.settingsUiElements[index]  # type SettingsUiElements
+    settingsUiElements.systemEntry.delete(0, tk.END)
+    settingsUiElements.xEntry.delete(0, tk.END)
+    settingsUiElements.yEntry.delete(0, tk.END)
+    settingsUiElements.zEntry.delete(0, tk.END)
+
+
+def fillEntries(s, x, y, z, systemEntry, xEntry, yEntry, zEntry):
+    systemEntry.insert(0, s)
+    if type(x) == str:
+        xEntry.insert(0, x)
+    else:
+        xEntry.insert(0, Locale.stringFromNumber(x))
+    if type(y) == str:
+        yEntry.insert(0, y)
+    else:
+        yEntry.insert(0, Locale.stringFromNumber(y))
+    if type(z) == str:
+        zEntry.insert(0, z)
+    else:
+        zEntry.insert(0, Locale.stringFromNumber(z))
+
+
+def rearrangeOrder(oldIndex, newIndex):
+    if oldIndex < 0 or oldIndex >= len(this.settingsUiElements) or newIndex < 0 or newIndex >= len(this.settingsUiElements):
+        print(f"DistanceCalc: Can't rearrange system from index {oldIndex} to {newIndex}")
+        return  # something went wrong with the indexes
+
+    old_systemText = this.settingsUiElements[oldIndex].systemEntry.get()
+    old_xText = this.settingsUiElements[oldIndex].xEntry.get()
+    old_yText = this.settingsUiElements[oldIndex].yEntry.get()
+    old_zText = this.settingsUiElements[oldIndex].zEntry.get()
+
+    new_systemText = this.settingsUiElements[newIndex].systemEntry.get()
+    new_xText = this.settingsUiElements[newIndex].xEntry.get()
+    new_yText = this.settingsUiElements[newIndex].yEntry.get()
+    new_zText = this.settingsUiElements[newIndex].zEntry.get()
+
+    clearInputFields(oldIndex)
+    clearInputFields(newIndex)
+    uiElements = this.settingsUiElements[oldIndex]  # type: SettingsUiElements
+    fillEntries(new_systemText, new_xText, new_yText, new_zText, uiElements.systemEntry, uiElements.xEntry, uiElements.yEntry, uiElements.zEntry)
+    uiElements = this.settingsUiElements[newIndex]  # type: SettingsUiElements
+    fillEntries(old_systemText, old_xText, old_yText, old_zText, uiElements.systemEntry, uiElements.xEntry, uiElements.yEntry, uiElements.zEntry)
 
 
 def getSystemInformationFromEDSM(buttonNumber, systemName):
@@ -192,10 +232,10 @@ def plugin_prefs(parent, cmdr, is_beta):
     frameBottom.grid(row=1, column=0, sticky=tk.SW)
 
     # headline
-    nb.Label(frameTop, text="Systems").grid(row=row_top, column=0, sticky=tk.EW)
-    nb.Label(frameTop, text="X").grid(row=row_top, column=1, sticky=tk.EW)
-    nb.Label(frameTop, text="Y").grid(row=row_top, column=2, sticky=tk.EW)
-    nb.Label(frameTop, text="Z").grid(row=row_top, column=3, sticky=tk.EW)
+    nb.Label(frameTop, text="Systems").grid(row=row_top, column=2, sticky=tk.EW)
+    nb.Label(frameTop, text="X").grid(row=row_top, column=3, sticky=tk.EW)
+    nb.Label(frameTop, text="Y").grid(row=row_top, column=4, sticky=tk.EW)
+    nb.Label(frameTop, text="Z").grid(row=row_top, column=5, sticky=tk.EW)
 
     this.errorLabel = nb.Label(frameTop, text="")
 
@@ -205,28 +245,41 @@ def plugin_prefs(parent, cmdr, is_beta):
     # create and add fields to enter systems
     for i in range(this.NUMBER_OF_SYSTEMS):
         next_row_top()
+
+        upButton = nb.Button(frameTop, text="\u25B2", command=partial(rearrangeOrder, i, i - 1))
+        upButton.grid(row=row_top, column=0, padx=(this.PADX * 2, 1), sticky=tk.W)
+        upButton.config(width=3)
+        if i == 0:
+            upButton["state"] = tk.DISABLED
+
+        downButton = nb.Button(frameTop, text="\u25BC", command=partial(rearrangeOrder, i, i + 1))
+        downButton.grid(row=row_top, column=1, padx=(1, this.PADX), sticky=tk.W)
+        downButton.config(width=3)
+        if i == this.NUMBER_OF_SYSTEMS - 1:
+            downButton["state"] = tk.DISABLED
+
         systemEntry = nb.Entry(frameTop)
-        systemEntry.grid(row=row_top, column=0, padx=(this.PADX * 2, this.PADX), sticky=tk.W)
+        systemEntry.grid(row=row_top, column=2, padx=this.PADX, sticky=tk.W)
         systemEntry.config(width=this.WIDTH * 4)  # set fixed width. columnconfigure doesn't work because it already fits
 
         xEntry = nb.Entry(frameTop, validate='key', validatecommand=vcmd)
-        xEntry.grid(row=row_top, column=1, padx=this.PADX, sticky=tk.W)
+        xEntry.grid(row=row_top, column=3, padx=this.PADX, sticky=tk.W)
         xEntry.config(width=this.WIDTH)  # set fixed width. columnconfigure doesn't work because it already fits
 
         yEntry = nb.Entry(frameTop, validate='key', validatecommand=vcmd)
-        yEntry.grid(row=row_top, column=2, padx=this.PADX, sticky=tk.W)
+        yEntry.grid(row=row_top, column=4, padx=this.PADX, sticky=tk.W)
         yEntry.config(width=this.WIDTH)  # set fixed width. columnconfigure doesn't work because it already fits
 
         zEntry = nb.Entry(frameTop, validate='key', validatecommand=vcmd)
-        zEntry.grid(row=row_top, column=3, padx=this.PADX, sticky=tk.W)
+        zEntry.grid(row=row_top, column=5, padx=this.PADX, sticky=tk.W)
         zEntry.config(width=this.WIDTH)  # set fixed width. columnconfigure doesn't work because it already fits
 
-        clearButton = nb.Button(frameTop, text="Clear", command=partial(clearInputFields, systemEntry, xEntry, yEntry, zEntry))
-        clearButton.grid(row=row_top, column=4, padx=this.PADX, sticky=tk.W)
+        clearButton = nb.Button(frameTop, text="Clear", command=partial(clearInputFields, i))
+        clearButton.grid(row=row_top, column=6, padx=this.PADX, sticky=tk.W)
         clearButton.config(width=7)
 
         edsmButton = nb.Button(frameTop, text="EDSM")
-        edsmButton.grid(row=row_top, column=5, padx=(this.PADX, this.PADX * 2), sticky=tk.W)
+        edsmButton.grid(row=row_top, column=7, padx=(this.PADX, this.PADX * 2), sticky=tk.W)
         edsmButton.config(width=7, command=partial(fillSystemInformationFromEdsmAsync, i, systemEntry))
 
         this.settingsUiElements.append(SettingsUiElements(systemEntry, xEntry, yEntry, zEntry, edsmButton))
@@ -275,18 +328,12 @@ def plugin_prefs(parent, cmdr, is_beta):
     HyperlinkLabel(this.frame, text="Get estimated coordinates from EDTS", background=nb.Label().cget("background"), url="http://edts.thargoid.space/", underline=True)\
         .grid(row=next_row_bottom(), column=0, padx=this.PADX, sticky=tk.W)
 
-    def fillEntries(s, x, y, z, systemEntry, xEntry, yEntry, zEntry):
-        systemEntry.insert(0, s)
-        xEntry.insert(0, Locale.stringFromNumber(x))
-        yEntry.insert(0, Locale.stringFromNumber(y))
-        zEntry.insert(0, Locale.stringFromNumber(z))
-
-    row_top = 0
+    row = 0
     if len(this.distances) > 0:
         for var in this.distances:
-            settingsUiElement = this.settingsUiElements[row_top]
+            settingsUiElement = this.settingsUiElements[row]
             fillEntries(var["system"], var["x"], var["y"], var["z"], settingsUiElement.systemEntry, settingsUiElement.xEntry, settingsUiElement.yEntry, settingsUiElement.zEntry)
-            row_top += 1
+            row += 1
 
     return this.frame
 
@@ -328,7 +375,7 @@ def updateMainUi():
 
 
 def prefs_changed(cmdr, is_beta):
-    this.distances = list()
+    distances = list()
     for settingsUiElement in this.settingsUiElements:
         systemText = settingsUiElement.systemEntry.get()
         xText = settingsUiElement.xEntry.get()
@@ -341,11 +388,12 @@ def prefs_changed(cmdr, is_beta):
                 d["x"] = Locale.numberFromString(xText.strip())
                 d["y"] = Locale.numberFromString(yText.strip())
                 d["z"] = Locale.numberFromString(zText.strip())
-                this.distances.append(d)
+                distances.append(d)
             except Exception as e:  # error while parsing the numbers
                 print(e)
                 sys.stderr.write("DistanceCalc: Error while parsing the coordinates for {0}".format(systemText.strip()))
                 continue
+    this.distances = distances
     config.set("DistanceCalc", json.dumps(this.distances))
 
     settings = this.travelledTotalOption.get() | (this.travelledSessionOption.get() << 1) | (this.travelledSessionSelected.get() << 2)
