@@ -26,6 +26,3 @@ The _total distance_ is stored and is available even when the program is closed.
 The travelled distance for the current session has two available options:
 * Calculate it for the current EDSM session: Add distances as long as EDSM runs
 * Calculate it for the current Elite Session: Add distances as long as you don't load into Elite or close EDSM
-
-## Acknowledgments
-* This plugin is part of the EDMC repack by Six-Shooter. You can download the repack at http://edfs.space/index.php/Tools
