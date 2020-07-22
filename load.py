@@ -198,10 +198,10 @@ def setStateRadioButtons(travelledSessionEdmc, travelledSessionElite):
 
 
 def updatePrefsUI(event=None):
-    for settingsUiElement in this.settingsUiElements:
+    for i, settingsUiElement in enumerate(this.settingsUiElements):
         if settingsUiElement.hasData:
             if settingsUiElement.success:
-                clearInputFields(settingsUiElement.systemEntry, settingsUiElement.xEntry, settingsUiElement.yEntry, settingsUiElement.zEntry)
+                clearInputFields(i)
                 settingsUiElement.systemEntry.insert(0, settingsUiElement.systemName)
                 settingsUiElement.xEntry.insert(0, Locale.stringFromNumber(settingsUiElement.x))
                 settingsUiElement.yEntry.insert(0, Locale.stringFromNumber(settingsUiElement.y))
