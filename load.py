@@ -18,25 +18,41 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 
 import sys
+import os
 import math
 import json
 import urllib
+import logging
 from threading import Thread
 from functools import partial
-from config import config
+
+from config import config, appname
+from l10n import Locale
 from ttkHyperlinkLabel import HyperlinkLabel
 import myNotebook as nb
-from l10n import Locale
 import tkinter as tk
 import tkinter.ttk as ttk
 
-
 this = sys.modules[__name__]  # For holding module globals
 
-this.VERSION = "1.24"
+this.VERSION = "1.3"
+this.BG_UPDATE_JSON = "bg_update_json"
 this.NUMBER_OF_SYSTEMS = 10
 this.PADX = 5
 this.WIDTH = 10
+
+logger = logging.getLogger(f"{appname}.{os.path.basename(os.path.dirname(__file__))}")
+if not logger.hasHandlers():
+    level = logging.INFO  # So logger.info(...) is equivalent to print()
+
+    logger.setLevel(logging.INFO)
+    logger_channel = logging.StreamHandler()
+    logger_channel.setLevel(level)
+    logger_formatter = logging.Formatter(f"%(asctime)s - %(name)s - %(levelname)s - %(module)s:%(lineno)d:%(funcName)s: %(message)s")
+    logger_formatter.default_time_format = "%Y-%m-%d %H:%M:%S"
+    logger_formatter.default_msec_format = "%s.%03d"
+    logger_channel.setFormatter(logger_formatter)
+    logger.addHandler(this.logger_channel)
 
 
 class SettingsUiElements(object):
@@ -105,7 +121,7 @@ def fillEntries(s, x, y, z, systemEntry, xEntry, yEntry, zEntry):
 
 def rearrangeOrder(oldIndex, newIndex):
     if oldIndex < 0 or oldIndex >= len(this.settingsUiElements) or newIndex < 0 or newIndex >= len(this.settingsUiElements):
-        print(f"DistanceCalc: Can't rearrange system from index {oldIndex} to {newIndex}")
+        logger.error(f"DistanceCalc: Can't rearrange system from index {oldIndex} to {newIndex}")
         return  # something went wrong with the indexes
 
     old_systemText = this.settingsUiElements[oldIndex].systemEntry.get()
@@ -391,8 +407,7 @@ def prefs_changed(cmdr, is_beta):
                 d["z"] = Locale.numberFromString(zText.strip())
                 distances.append(d)
             except Exception as e:  # error while parsing the numbers
-                print(e)
-                sys.stderr.write("DistanceCalc: Error while parsing the coordinates for {0}".format(systemText.strip()))
+                logger.exception(f"DistanceCalc: Error while parsing the coordinates for {systemText.strip()}")
                 continue
     this.distances = distances
     config.set("DistanceCalc", json.dumps(this.distances))
