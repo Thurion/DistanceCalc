@@ -65,7 +65,8 @@ class SettingsUiElements(object):
 
 
 def plugin_start3(plugin_dir):
-    this.distances = json.loads(config.get("DistanceCalc") or "[]")
+    distances = json.loads(config.get("DistanceCalc") or "[]")
+    this.distances = distances[:this.NUMBER_OF_SYSTEMS]
     this.coordinates = None
     this.distanceTotal = float(config.getint("DistanceCalc_travelled") or 0) / 1000.0
     this.distanceSession = 0.0
