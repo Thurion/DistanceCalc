@@ -85,10 +85,10 @@ class DistanceCalc(object):
     EVENT_EDSM_RESPONSE = "<<DistanceCalc-EDSM-Response>>"
 
     def __init__(self):
-        distances = json.loads(config.get("DistanceCalc") or "[]")
+        distances = json.loads(config.get_str("DistanceCalc") or "[]")
         self.distances = distances[:this.NUMBER_OF_SYSTEMS]
         self.coordinates: Tuple[float, float, float] = None
-        self.distanceTotal: float = float(config.getint("DistanceCalc_travelled") or 0) / 1000.0
+        self.distanceTotal: float = float(config.get_int("DistanceCalc_travelled") or 0) / 1000.0
         self.distanceSession: float = 0.0
         a, b, c = self.getSettingsTravelled()
         self.travelledTotalOption: tk.IntVar = tk.IntVar(value=a and 1)
@@ -134,7 +134,7 @@ class DistanceCalc(object):
 
     @staticmethod
     def getSettingsTravelled():
-        settings = config.getint("DistanceCalc_options")
+        settings = config.get_int("DistanceCalc_options")
         settingTotal = settings & 1  # calculate total distance travelled
         settingSession = (settings >> 1) & 1  # calculate for session only
         settingSessionOption = (settings >> 2) & 1  # 1 = calculate for ED session; 0 = calculate for EDMC session
