@@ -25,7 +25,7 @@ import logging
 from urllib import request, parse
 from threading import Thread
 from functools import partial
-from typing import List, Tuple
+from typing import List, Tuple, Union
 
 from config import config, appname
 from l10n import Locale
@@ -41,11 +41,11 @@ this.BG_UPDATE_JSON = "bg_update_json"
 this.NUMBER_OF_SYSTEMS = 10
 this.PADX = 5
 this.WIDTH = 10
+this.distanceCalc = None  # type DistanceCalc
 
 logger = logging.getLogger(f"{appname}.{os.path.basename(os.path.dirname(__file__))}")
 if not logger.hasHandlers():
     level = logging.INFO  # So logger.info(...) is equivalent to print()
-
     logger.setLevel(logging.INFO)
     logger_channel = logging.StreamHandler()
     logger_channel.setLevel(level)
@@ -53,32 +53,35 @@ if not logger.hasHandlers():
     logger_formatter.default_time_format = "%Y-%m-%d %H:%M:%S"
     logger_formatter.default_msec_format = "%s.%03d"
     logger_channel.setFormatter(logger_formatter)
-    logger.addHandler(this.logger_channel)
+    #logger.addHandler(this.logger_channel)
 
 
 class SettingsUiElements(object):
-    def __init__(self, systemEntry, xEntry, yEntry, zEntry, edsmButton, hasData=False, success=False, x=0, y=0, z=0, systemName="", errorText=""):
-        self.systemEntry = systemEntry
-        self.xEntry = xEntry
-        self.yEntry = yEntry
-        self.zEntry = zEntry
-        self.edsmButton = edsmButton
-        self.hasData = hasData
+    def __init__(self, system_entry: nb.Entry, x_entry: nb.Entry, y_entry: nb.Entry, z_entry: nb.Entry,
+                 edsm_button: nb.Button, has_data: bool = False, success: bool = False,
+                 x: Union[float, int] = 0, y: Union[float, int] = 0, z: Union[float, int] = 0,
+                 system_name: str = "", error_text: str = ""):
+        self.system_entry = system_entry
+        self.x_entry = x_entry
+        self.y_entry = y_entry
+        self.z_entry = z_entry
+        self.edsm_button = edsm_button
+        self.has_data = has_data
         self.success = success
         self.x = x
         self.y = y
         self.z = z
-        self.systemName = systemName
-        self.statusText = errorText
+        self.system_name = system_name
+        self.status_text = error_text
 
-    def resetResponseData(self):
-        self.hasData = False
+    def reset_response_data(self):
+        self.has_data = False
         self.success = False
         self.x = 0
         self.y = 0
         self.z = 0
-        self.systemName = ""
-        self.statusText = ""
+        self.system_name = ""
+        self.status_text = ""
 
 
 class DistanceCalc(object):
@@ -87,37 +90,38 @@ class DistanceCalc(object):
     def __init__(self):
         distances = json.loads(config.get_str("DistanceCalc") or "[]")
         self.distances = distances[:this.NUMBER_OF_SYSTEMS]
-        self.coordinates: Tuple[float, float, float] = None
-        self.distanceTotal: float = float(config.get_int("DistanceCalc_travelled") or 0) / 1000.0
-        self.distanceSession: float = 0.0
-        a, b, c = self.getSettingsTravelled()
-        self.travelledTotalOption: tk.IntVar = tk.IntVar(value=a and 1)
-        self.travelledSessionOption: tk.IntVar = tk.IntVar(value=b and 1)
-        self.travelledSessionSelected: tk.IntVar = tk.IntVar(value=c and 1)
-        self.errorLabel: tk.Label = None
-        self.settingsUiElements = list()
-        self.distanceLabels: List[Tuple[tk.Label, tk.Label]] = list()
-        self.travelledLabels: List[tk.Label] = list()
-        self.emptyFrame: tk.Frame = None
-        self.updateNotificationLabel: HyperlinkLabel = None
-        self.prefs_frame: tk.Frame = None
+        self.coordinates: Union[Tuple[float, float, float], None] = None
+        self.distance_total: float = float(config.get_int("DistanceCalc_travelled") or 0) / 1000.0
+        self.distance_session: float = 0.0
+        a, b, c = self.get_settings_travelled()
+        self.travelled_total_option: tk.IntVar = tk.IntVar(value=a and 1)
+        self.travelled_session_option: tk.IntVar = tk.IntVar(value=b and 1)
+        self.travelled_session_selected: tk.IntVar = tk.IntVar(value=c and 1)
+        self.error_label: Union[tk.Label, None] = None
+        self.settings_ui_elements: List[SettingsUiElements] = list()
+        self.distance_labels: List[Tuple[tk.Label, tk.Label]] = list()
+        self.travelled_labels: List[tk.Label] = list()
+        self.empty_frame: Union[tk.Frame, None] = None
+        self.update_notification_label: Union[HyperlinkLabel, None] = None
+        self.prefs_frame: Union[tk.Frame, None] = None
 
     # region static and helper methods
     @staticmethod
-    def fillEntries(s, x, y, z, systemEntry, xEntry, yEntry, zEntry):
-        systemEntry.insert(0, s)
+    def fill_entries(system_name: str, x: Union[str, int, float], y: Union[str, int, float], z: Union[str, int, float],
+                     system_entry: nb.Entry, x_entry: nb.Entry, y_entry: nb.Entry, z_entry: nb.Entry):
+        system_entry.insert(0, system_name)
         if type(x) == str:
-            xEntry.insert(0, x)
+            x_entry.insert(0, x)
         else:
-            xEntry.insert(0, Locale.string_from_number(x, 3))
+            x_entry.insert(0, Locale.string_from_number(x, 3))
         if type(y) == str:
-            yEntry.insert(0, y)
+            y_entry.insert(0, y)
         else:
-            yEntry.insert(0, Locale.string_from_number(y, 3))
+            y_entry.insert(0, Locale.string_from_number(y, 3))
         if type(z) == str:
-            zEntry.insert(0, z)
+            z_entry.insert(0, z)
         else:
-            zEntry.insert(0, Locale.string_from_number(z, 3))
+            z_entry.insert(0, Locale.string_from_number(z, 3))
 
     @staticmethod
     def validate(action, index, value_if_allowed, prior_value, text, validation_type, trigger_type, widget_name):
@@ -133,34 +137,34 @@ class DistanceCalc(object):
         return False
 
     @staticmethod
-    def getSettingsTravelled():
+    def get_settings_travelled():
         settings = config.get_int("DistanceCalc_options")
-        settingTotal = settings & 1  # calculate total distance travelled
-        settingSession = (settings >> 1) & 1  # calculate for session only
-        settingSessionOption = (settings >> 2) & 1  # 1 = calculate for ED session; 0 = calculate for EDMC session
-        return settingTotal, settingSession, settingSessionOption
+        setting_total = settings & 1  # calculate total distance travelled
+        setting_session = (settings >> 1) & 1  # calculate for session only
+        setting_session_option = (settings >> 2) & 1  # 1 = calculate for ED session; 0 = calculate for EDMC session
+        return setting_total, setting_session, setting_session_option
 
     @staticmethod
-    def calculateDistance(x1, y1, z1, x2, y2, z2):
+    def calculate_distance(x1: Union[int, float], y1: Union[int, float], z1: Union[int, float], x2: Union[int, float], y2: Union[int, float], z2: Union[int, float]):
         return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2 + (z1 - z2) ** 2)
     # endregion
 
     # region interface methods
     def plugin_app(self, parent: tk.Frame):
         frame = tk.Frame(parent)
-        self.emptyFrame = tk.Frame(frame)
+        self.empty_frame = tk.Frame(frame)
         frame.columnconfigure(1, weight=1)
         for i in range(this.NUMBER_OF_SYSTEMS):
-            self.distanceLabels.append((tk.Label(frame), tk.Label(frame)))
+            self.distance_labels.append((tk.Label(frame), tk.Label(frame)))
 
-            self.travelledLabels = list()
+            self.travelled_labels = list()
         for i in range(2):  # total and session
-            self.travelledLabels.append((tk.Label(frame), tk.Label(frame)))
+            self.travelled_labels.append((tk.Label(frame), tk.Label(frame)))
 
-        self.updateNotificationLabel = HyperlinkLabel(frame, text="Plugin update available", background=nb.Label().cget("background"),
-                                                      url="https://github.com/Thurion/DistanceCalc/releases", underline=True)
+        self.update_notification_label = HyperlinkLabel(frame, text="Plugin update available", background=nb.Label().cget("background"),
+                                                        url="https://github.com/Thurion/DistanceCalc/releases", underline=True)
 
-        self.updateMainUi()
+        self.update_main_ui()
         return frame
 
     def open_prefs(self, parent, cmdr: str, is_beta: bool):
@@ -172,71 +176,71 @@ class DistanceCalc(object):
             return row_top
 
         self.prefs_frame = nb.Frame(parent)
-        self.prefs_frame.bind_all(DistanceCalc.EVENT_EDSM_RESPONSE, self.updatePrefsUI)
-        frameTop = nb.Frame(self.prefs_frame)
-        frameTop.grid(row=0, column=0, sticky=tk.W)
-        frameBottom = nb.Frame(self.prefs_frame)
-        frameBottom.grid(row=1, column=0, sticky=tk.SW)
+        self.prefs_frame.bind_all(DistanceCalc.EVENT_EDSM_RESPONSE, self.update_prefs_ui)
+        frame_top = nb.Frame(self.prefs_frame)
+        frame_top.grid(row=0, column=0, sticky=tk.W)
+        frame_bottom = nb.Frame(self.prefs_frame)
+        frame_bottom.grid(row=1, column=0, sticky=tk.SW)
 
         # headline
-        nb.Label(frameTop, text="Systems").grid(row=row_top, column=2, sticky=tk.EW)
-        nb.Label(frameTop, text="X").grid(row=row_top, column=3, sticky=tk.EW)
-        nb.Label(frameTop, text="Y").grid(row=row_top, column=4, sticky=tk.EW)
-        nb.Label(frameTop, text="Z").grid(row=row_top, column=5, sticky=tk.EW)
+        nb.Label(frame_top, text="Systems").grid(row=row_top, column=2, sticky=tk.EW)
+        nb.Label(frame_top, text="X").grid(row=row_top, column=3, sticky=tk.EW)
+        nb.Label(frame_top, text="Y").grid(row=row_top, column=4, sticky=tk.EW)
+        nb.Label(frame_top, text="Z").grid(row=row_top, column=5, sticky=tk.EW)
 
-        self.errorLabel = nb.Label(frameTop, text="")
+        self.error_label = nb.Label(frame_top, text="")
 
-        self.settingsUiElements = list()
-        vcmd = (frameTop.register(self.validate), '%d', '%i', '%P', '%s', '%S', '%v', '%V', '%W')
+        self.settings_ui_elements = list()
+        vcmd = (frame_top.register(self.validate), '%d', '%i', '%P', '%s', '%S', '%v', '%V', '%W')
 
         # create and add fields to enter systems
         for i in range(this.NUMBER_OF_SYSTEMS):
             next_row_top()
 
-            upButton = nb.Button(frameTop, text="\u25B2", command=partial(self.rearrangeOrder, i, i - 1))
-            upButton.grid(row=row_top, column=0, padx=(this.PADX * 2, 1), sticky=tk.W)
-            upButton.config(width=3)
+            up_button = nb.Button(frame_top, text="\u25B2", command=partial(self.rearrange_order, i, i - 1))
+            up_button.grid(row=row_top, column=0, padx=(this.PADX * 2, 1), sticky=tk.W)
+            up_button.config(width=3)
             if i == 0:
-                upButton["state"] = tk.DISABLED
+                up_button["state"] = tk.DISABLED
 
-            downButton = nb.Button(frameTop, text="\u25BC", command=partial(self.rearrangeOrder, i, i + 1))
-            downButton.grid(row=row_top, column=1, padx=(1, this.PADX), sticky=tk.W)
-            downButton.config(width=3)
+            down_button = nb.Button(frame_top, text="\u25BC", command=partial(self.rearrange_order, i, i + 1))
+            down_button.grid(row=row_top, column=1, padx=(1, this.PADX), sticky=tk.W)
+            down_button.config(width=3)
             if i == this.NUMBER_OF_SYSTEMS - 1:
-                downButton["state"] = tk.DISABLED
+                down_button["state"] = tk.DISABLED
 
-            systemEntry = nb.Entry(frameTop)
-            systemEntry.grid(row=row_top, column=2, padx=this.PADX, sticky=tk.W)
-            systemEntry.config(width=this.WIDTH * 4)  # set fixed width. columnconfigure doesn't work because it already fits
+            system_entry = nb.Entry(frame_top)
+            system_entry.grid(row=row_top, column=2, padx=this.PADX, sticky=tk.W)
+            system_entry.config(width=this.WIDTH * 4)  # set fixed width. columnconfigure doesn't work because it already fits
 
-            xEntry = nb.Entry(frameTop, validate='key', validatecommand=vcmd)
-            xEntry.grid(row=row_top, column=3, padx=this.PADX, sticky=tk.W)
-            xEntry.config(width=this.WIDTH)  # set fixed width. columnconfigure doesn't work because it already fits
+            x_entry = nb.Entry(frame_top, validate='key', validatecommand=vcmd)
+            x_entry.grid(row=row_top, column=3, padx=this.PADX, sticky=tk.W)
+            x_entry.config(width=this.WIDTH)  # set fixed width. columnconfigure doesn't work because it already fits
 
-            yEntry = nb.Entry(frameTop, validate='key', validatecommand=vcmd)
-            yEntry.grid(row=row_top, column=4, padx=this.PADX, sticky=tk.W)
-            yEntry.config(width=this.WIDTH)  # set fixed width. columnconfigure doesn't work because it already fits
+            y_entry = nb.Entry(frame_top, validate='key', validatecommand=vcmd)
+            y_entry.grid(row=row_top, column=4, padx=this.PADX, sticky=tk.W)
+            y_entry.config(width=this.WIDTH)  # set fixed width. columnconfigure doesn't work because it already fits
 
-            zEntry = nb.Entry(frameTop, validate='key', validatecommand=vcmd)
-            zEntry.grid(row=row_top, column=5, padx=this.PADX, sticky=tk.W)
-            zEntry.config(width=this.WIDTH)  # set fixed width. columnconfigure doesn't work because it already fits
+            z_entry = nb.Entry(frame_top, validate='key', validatecommand=vcmd)
+            z_entry.grid(row=row_top, column=5, padx=this.PADX, sticky=tk.W)
+            z_entry.config(width=this.WIDTH)  # set fixed width. columnconfigure doesn't work because it already fits
 
-            clearButton = nb.Button(frameTop, text="Clear", command=partial(self.clearInputFields, i))
-            clearButton.grid(row=row_top, column=6, padx=this.PADX, sticky=tk.W)
-            clearButton.config(width=7)
+            clear_button = nb.Button(frame_top, text="Clear", command=partial(self.clear_input_fields, i))
+            clear_button.grid(row=row_top, column=6, padx=this.PADX, sticky=tk.W)
+            clear_button.config(width=7)
 
-            edsmButton = nb.Button(frameTop, text="EDSM")
-            edsmButton.grid(row=row_top, column=7, padx=(this.PADX, this.PADX * 2), sticky=tk.W)
-            edsmButton.config(width=7, command=partial(self.fillSystemInformationFromEdsmAsync, i, systemEntry))
+            edsm_button = nb.Button(frame_top, text="EDSM")
+            edsm_button.grid(row=row_top, column=7, padx=(this.PADX, this.PADX * 2), sticky=tk.W)
+            edsm_button.config(width=7, command=partial(self.fill_system_information_from_edsm_async, i, system_entry))
 
-            self.settingsUiElements.append(SettingsUiElements(systemEntry, xEntry, yEntry, zEntry, edsmButton))
+            self.settings_ui_elements.append(SettingsUiElements(system_entry, x_entry, y_entry, z_entry, edsm_button))
 
         # EDSM result label and information about what coordinates can be entered
-        self.errorLabel.grid(row=next_row_top(), column=0, columnspan=6, padx=this.PADX * 2, sticky=tk.W)
-        nb.Label(frameTop, text="You can get coordinates from EDDB or EDSM or enter any valid coordinate.").grid(row=next_row_top(), column=0, columnspan=6,
+        self.error_label.grid(row=next_row_top(), column=0, columnspan=6, padx=this.PADX * 2, sticky=tk.W)
+        nb.Label(frame_top, text="You can get coordinates from EDDB or EDSM or enter any valid coordinate.").grid(row=next_row_top(), column=0, columnspan=6,
                                                                                                                  padx=this.PADX * 2,
                                                                                                                  sticky=tk.W)
-        ttk.Separator(frameTop, orient=tk.HORIZONTAL).grid(row=next_row_top(), columnspan=6, padx=this.PADX * 2, pady=8, sticky=tk.EW)
+        ttk.Separator(frame_top, orient=tk.HORIZONTAL).grid(row=next_row_top(), columnspan=6, padx=this.PADX * 2, pady=8, sticky=tk.EW)
 
         row_bottom = 0
 
@@ -246,31 +250,31 @@ class DistanceCalc(object):
             return row_bottom
 
         # total travelled distance
-        travelledTotal = nb.Checkbutton(frameBottom, variable=self.travelledTotalOption, text="Calculate total travelled distance")
-        travelledTotal.var = self.travelledTotalOption
-        travelledTotal.grid(row=row_bottom, column=0, padx=this.PADX * 2, sticky=tk.W)
-        resetButton = nb.Button(frameBottom, text="Reset", command=self.resetTotalTravelledDistance)
-        resetButton.grid(row=next_row_bottom(), column=0, padx=this.PADX * 4, pady=5, sticky=tk.W)
+        travelled_total = nb.Checkbutton(frame_bottom, variable=self.travelled_total_option, text="Calculate total travelled distance")
+        travelled_total.var = self.travelled_total_option
+        travelled_total.grid(row=row_bottom, column=0, padx=this.PADX * 2, sticky=tk.W)
+        reset_button = nb.Button(frame_bottom, text="Reset", command=self.reset_total_travelled_distance)
+        reset_button.grid(row=next_row_bottom(), column=0, padx=this.PADX * 4, pady=5, sticky=tk.W)
 
-        travelledSession = nb.Checkbutton(frameBottom, variable=self.travelledSessionOption, text="Calculate travelled distance for current session")
-        travelledSession.var = self.travelledSessionOption
-        travelledSession.grid(row=next_row_bottom(), column=0, padx=this.PADX * 2, sticky=tk.W)
+        travelled_session = nb.Checkbutton(frame_bottom, variable=self.travelled_session_option, text="Calculate travelled distance for current session")
+        travelled_session.var = self.travelled_session_option
+        travelled_session.grid(row=next_row_bottom(), column=0, padx=this.PADX * 2, sticky=tk.W)
 
         # radio button value: 1 = calculate for ED session; 0 = calculate for EDMC session
-        travelledSessionEdmc = nb.Radiobutton(frameBottom, variable=self.travelledSessionSelected, value=0, text="EDMC session")
-        travelledSessionEdmc.var = self.travelledSessionSelected
-        travelledSessionEdmc.grid(row=next_row_bottom(), column=0, padx=this.PADX * 4, sticky=tk.W)
+        travelled_session_edmc = nb.Radiobutton(frame_bottom, variable=self.travelled_session_selected, value=0, text="EDMC session")
+        travelled_session_edmc.var = self.travelled_session_selected
+        travelled_session_edmc.grid(row=next_row_bottom(), column=0, padx=this.PADX * 4, sticky=tk.W)
 
-        travelledSessionElite = nb.Radiobutton(frameBottom, variable=self.travelledSessionSelected, value=1, text="Elite session")
-        travelledSessionElite.var = self.travelledSessionSelected
-        travelledSessionElite.grid(row=next_row_bottom(), column=0, padx=this.PADX * 4, sticky=tk.W)
+        travelled_session_elite = nb.Radiobutton(frame_bottom, variable=self.travelled_session_selected, value=1, text="Elite session")
+        travelled_session_elite.var = self.travelled_session_selected
+        travelled_session_elite.grid(row=next_row_bottom(), column=0, padx=this.PADX * 4, sticky=tk.W)
 
-        self.setStateRadioButtons(travelledSessionEdmc, travelledSessionElite)
-        travelledSession.config(command=partial(self.setStateRadioButtons, travelledSessionEdmc, travelledSessionElite))
+        self.set_state_radio_buttons(travelled_session_edmc, travelled_session_elite)
+        travelled_session.config(command=partial(self.set_state_radio_buttons, travelled_session_edmc, travelled_session_elite))
 
-        nb.Label(frameBottom).grid(row=next_row_bottom())  # spacer
-        nb.Label(frameBottom).grid(row=next_row_bottom())  # spacer
-        nb.Label(frameBottom, text="Plugin version: {0}".format(this.VERSION)).grid(row=next_row_bottom(), column=0, padx=this.PADX, sticky=tk.W)
+        nb.Label(frame_bottom).grid(row=next_row_bottom())  # spacer
+        nb.Label(frame_bottom).grid(row=next_row_bottom())  # spacer
+        nb.Label(frame_bottom, text="Plugin version: {0}".format(this.VERSION)).grid(row=next_row_bottom(), column=0, padx=this.PADX, sticky=tk.W)
         HyperlinkLabel(self.prefs_frame, text="Open the Github page for this plugin", background=nb.Label().cget("background"),
                        url="https://github.com/Thurion/DistanceCalc/", underline=True).grid(row=next_row_bottom(), column=0, padx=this.PADX, sticky=tk.W)
         HyperlinkLabel(self.prefs_frame, text="Get estimated coordinates from EDTS", background=nb.Label().cget("background"),
@@ -279,43 +283,43 @@ class DistanceCalc(object):
         row = 0
         if len(self.distances) > 0:
             for var in self.distances:
-                settingsUiElement = self.settingsUiElements[row]
-                self.fillEntries(var["system"], var["x"], var["y"], var["z"],
-                                 settingsUiElement.systemEntry,
-                                 settingsUiElement.xEntry,
-                                 settingsUiElement.yEntry,
-                                 settingsUiElement.zEntry)
+                settings_ui_element = self.settings_ui_elements[row]
+                self.fill_entries(var["system"], var["x"], var["y"], var["z"],
+                                  settings_ui_element.system_entry,
+                                  settings_ui_element.x_entry,
+                                  settings_ui_element.y_entry,
+                                  settings_ui_element.z_entry)
                 row += 1
 
         return self.prefs_frame
 
     def prefs_changed(self, cmdr: str, is_beta: bool):
         distances = list()
-        for settingsUiElement in self.settingsUiElements:
-            systemText = settingsUiElement.systemEntry.get()
-            xText = settingsUiElement.xEntry.get()
-            yText = settingsUiElement.yEntry.get()
-            zText = settingsUiElement.zEntry.get()
-            if systemText and xText and yText and zText:
+        for settings_ui_element in self.settings_ui_elements:
+            system_text = settings_ui_element.system_entry.get()
+            x_text = settings_ui_element.x_entry.get()
+            y_text = settings_ui_element.y_entry.get()
+            z_text = settings_ui_element.z_entry.get()
+            if system_text and x_text and y_text and z_text:
                 try:
                     distances.append({
-                        "system": systemText.strip(),
-                        "x": Locale.number_from_string(xText.strip()),
-                        "y": Locale.number_from_string(yText.strip()),
-                        "z": Locale.number_from_string(zText.strip())
+                        "system": system_text.strip(),
+                        "x": Locale.number_from_string(x_text.strip()),
+                        "y": Locale.number_from_string(y_text.strip()),
+                        "z": Locale.number_from_string(z_text.strip())
                     })
 
                 except Exception as e:  # error while parsing the numbers
-                    logger.exception(f"DistanceCalc: Error while parsing the coordinates for {systemText.strip()}")
+                    logger.exception(f"DistanceCalc: Error while parsing the coordinates for {system_text.strip()}")
                     continue
         self.distances = distances
         config.set("DistanceCalc", json.dumps(self.distances))
 
-        settings = self.travelledTotalOption.get() | (self.travelledSessionOption.get() << 1) | (self.travelledSessionSelected.get() << 2)
+        settings = self.travelled_total_option.get() | (self.travelled_session_option.get() << 1) | (self.travelled_session_selected.get() << 2)
         config.set("DistanceCalc_options", settings)
 
-        self.updateMainUi()
-        self.updateDistances()
+        self.update_main_ui()
+        self.update_distances()
         self.prefs_frame = None
 
     def journal_entry(self, cmdr, is_beta, system, station, entry, state):
@@ -325,51 +329,51 @@ class DistanceCalc(object):
                 self.coordinates = tuple(entry["StarPos"])
             if "JumpDist" in entry:
                 distance = entry["JumpDist"]
-                if self.travelledTotalOption.get():
-                    self.distanceTotal += distance
-                    config.set("DistanceCalc_travelled", int(self.distanceTotal * 1000))
-                if self.travelledSessionOption.get():
-                    self.distanceSession += distance
-            self.updateDistances()
-        if entry["event"] == "LoadGame" and self.travelledSessionOption.get() and self.travelledSessionSelected.get():
-            self.distanceSession = 0.0
-            self.updateDistances()
+                if self.travelled_total_option.get():
+                    self.distance_total += distance
+                    config.set("DistanceCalc_travelled", int(self.distance_total * 1000))
+                if self.travelled_session_option.get():
+                    self.distance_session += distance
+            self.update_distances()
+        if entry["event"] == "LoadGame" and self.travelled_session_option.get() and self.travelled_session_selected.get():
+            self.distance_session = 0.0
+            self.update_distances()
     # endregion
 
     # region user interface
-    def clearInputFields(self, index):
-        settingsUiElements = self.settingsUiElements[index]  # type SettingsUiElements
-        settingsUiElements.systemEntry.delete(0, tk.END)
-        settingsUiElements.xEntry.delete(0, tk.END)
-        settingsUiElements.yEntry.delete(0, tk.END)
-        settingsUiElements.zEntry.delete(0, tk.END)
+    def clear_input_fields(self, index):
+        settings_ui_elements = self.settings_ui_elements[index]  # type SettingsUiElements
+        settings_ui_elements.system_entry.delete(0, tk.END)
+        settings_ui_elements.x_entry.delete(0, tk.END)
+        settings_ui_elements.y_entry.delete(0, tk.END)
+        settings_ui_elements.z_entry.delete(0, tk.END)
 
-    def rearrangeOrder(self, oldIndex, newIndex):
-        if oldIndex < 0 or oldIndex >= len(self.settingsUiElements) or newIndex < 0 or newIndex >= len(self.settingsUiElements):
-            logger.error(f"DistanceCalc: Can't rearrange system from index {oldIndex} to {newIndex}")
+    def rearrange_order(self, old_index: int, new_index: int):
+        if old_index < 0 or old_index >= len(self.settings_ui_elements) or new_index < 0 or new_index >= len(self.settings_ui_elements):
+            logger.error(f"DistanceCalc: Can't rearrange system from index {old_index} to {new_index}")
             return  # something went wrong with the indexes
 
-        old_systemText = self.settingsUiElements[oldIndex].systemEntry.get()
-        old_xText = self.settingsUiElements[oldIndex].xEntry.get()
-        old_yText = self.settingsUiElements[oldIndex].yEntry.get()
-        old_zText = self.settingsUiElements[oldIndex].zEntry.get()
+        old_system_text = self.settings_ui_elements[old_index].system_entry.get()
+        old_x_text = self.settings_ui_elements[old_index].x_entry.get()
+        old_y_text = self.settings_ui_elements[old_index].y_entry.get()
+        old_z_text = self.settings_ui_elements[old_index].z_entry.get()
 
-        new_systemText = self.settingsUiElements[newIndex].systemEntry.get()
-        new_xText = self.settingsUiElements[newIndex].xEntry.get()
-        new_yText = self.settingsUiElements[newIndex].yEntry.get()
-        new_zText = self.settingsUiElements[newIndex].zEntry.get()
+        new_system_text = self.settings_ui_elements[new_index].system_entry.get()
+        new_x_text = self.settings_ui_elements[new_index].x_entry.get()
+        new_y_text = self.settings_ui_elements[new_index].y_entry.get()
+        new_z_text = self.settings_ui_elements[new_index].z_entry.get()
 
-        self.clearInputFields(oldIndex)
-        self.clearInputFields(newIndex)
-        uiElements = self.settingsUiElements[oldIndex]  # type: SettingsUiElements
-        self.fillEntries(new_systemText, new_xText, new_yText, new_zText, uiElements.systemEntry, uiElements.xEntry, uiElements.yEntry, uiElements.zEntry)
-        uiElements = self.settingsUiElements[newIndex]  # type: SettingsUiElements
-        self.fillEntries(old_systemText, old_xText, old_yText, old_zText, uiElements.systemEntry, uiElements.xEntry, uiElements.yEntry, uiElements.zEntry)
+        self.clear_input_fields(old_index)
+        self.clear_input_fields(new_index)
+        uiElements = self.settings_ui_elements[old_index]  # type: SettingsUiElements
+        self.fill_entries(new_system_text, new_x_text, new_y_text, new_z_text, uiElements.system_entry, uiElements.x_entry, uiElements.y_entry, uiElements.z_entry)
+        uiElements = self.settings_ui_elements[new_index]  # type: SettingsUiElements
+        self.fill_entries(old_system_text, old_x_text, old_y_text, old_z_text, uiElements.system_entry, uiElements.x_entry, uiElements.y_entry, uiElements.z_entry)
 
-    def updateMainUi(self):
+    def update_main_ui(self):
         # labels for distances to systems
         row = 0
-        for (system, distance) in self.distanceLabels:
+        for (system, distance) in self.distance_labels:
             if len(self.distances) >= row + 1:
                 s = self.distances[row]
                 system.grid(row=row, column=0, sticky=tk.W)
@@ -382,108 +386,108 @@ class DistanceCalc(object):
                 distance.grid_remove()
 
         # labels for total travelled distance
-        settingTotal, settingSession, settingSessionOption = self.getSettingsTravelled()
+        setting_total, setting_session, setting_session_option = self.get_settings_travelled()
 
-        for i in range(len(self.travelledLabels)):
-            description, distance = self.travelledLabels[i]
-            if (i == 0 and settingTotal) or (i == 1 and settingSession):
+        for i in range(len(self.travelled_labels)):
+            description, distance = self.travelled_labels[i]
+            if (i == 0 and setting_total) or (i == 1 and setting_session):
                 description.grid(row=row, column=0, sticky=tk.W)
                 description["text"] = "Travelled ({0}):".format("total" if i == 0 else "session")
                 distance.grid(row=row, column=1, sticky=tk.W)
-                distance["text"] = "{0} Ly".format(Locale.string_from_number(self.distanceTotal, 2) if i == 0 else Locale.string_from_number(self.distanceSession, 2))
+                distance["text"] = "{0} Ly".format(Locale.string_from_number(self.distance_total, 2) if i == 0 else Locale.string_from_number(self.distance_session, 2))
                 row += 1
             else:
                 description.grid_remove()
                 distance.grid_remove()
 
         if row == 0:
-            self.emptyFrame.grid(row=0)
+            self.empty_frame.grid(row=0)
         else:
-            self.emptyFrame.grid_remove()
+            self.empty_frame.grid_remove()
 
-    def updatePrefsUI(self, event=None):
-        for i, settingsUiElement in enumerate(self.settingsUiElements):
-            if settingsUiElement.hasData:
-                if settingsUiElement.success:
-                    self.clearInputFields(i)
-                    settingsUiElement.systemEntry.insert(0, settingsUiElement.systemName)
-                    settingsUiElement.xEntry.insert(0, Locale.string_from_number(settingsUiElement.x))
-                    settingsUiElement.yEntry.insert(0, Locale.string_from_number(settingsUiElement.y))
-                    settingsUiElement.zEntry.insert(0, Locale.string_from_number(settingsUiElement.z))
-                    self.errorLabel["text"] = settingsUiElement.statusText
-                    self.errorLabel.config(foreground="dark green")
+    def update_prefs_ui(self, event=None):
+        for i, settings_ui_element in enumerate(self.settings_ui_elements):
+            if settings_ui_element.has_data:
+                if settings_ui_element.success:
+                    self.clear_input_fields(i)
+                    settings_ui_element.system_entry.insert(0, settings_ui_element.system_name)
+                    settings_ui_element.x_entry.insert(0, Locale.string_from_number(settings_ui_element.x))
+                    settings_ui_element.y_entry.insert(0, Locale.string_from_number(settings_ui_element.y))
+                    settings_ui_element.z_entry.insert(0, Locale.string_from_number(settings_ui_element.z))
+                    self.error_label["text"] = settings_ui_element.status_text
+                    self.error_label.config(foreground="dark green")
                 else:
-                    self.errorLabel["text"] = settingsUiElement.statusText
-                    self.errorLabel.config(foreground="red")
+                    self.error_label["text"] = settings_ui_element.status_text
+                    self.error_label.config(foreground="red")
 
-                settingsUiElement.edsmButton["state"] = tk.NORMAL
-                settingsUiElement.resetResponseData()
+                settings_ui_element.edsm_button["state"] = tk.NORMAL
+                settings_ui_element.reset_response_data()
 
-    def setStateRadioButtons(self, travelledSessionEdmc, travelledSessionElite):
-        if self.travelledSessionOption.get() == 1:
-            travelledSessionEdmc["state"] = "normal"
-            travelledSessionElite["state"] = "normal"
+    def set_state_radio_buttons(self, travelled_session_edmc, travelled_session_elite):
+        if self.travelled_session_option.get() == 1:
+            travelled_session_edmc["state"] = "normal"
+            travelled_session_elite["state"] = "normal"
         else:
-            travelledSessionEdmc["state"] = "disabled"
-            travelledSessionElite["state"] = "disabled"
+            travelled_session_edmc["state"] = "disabled"
+            travelled_session_elite["state"] = "disabled"
 
-    def updateDistances(self):
+    def update_distances(self):
         if not self.coordinates:
-            for (_, distance) in self.distanceLabels:
+            for (_, distance) in self.distance_labels:
                 distance["text"] = "? Ly"
         else:
             for i in range(len(self.distances)):
                 system = self.distances[i]
-                distance = self.calculateDistance(system["x"], system["y"], system["z"], *self.coordinates)
-                self.distanceLabels[i][1]["text"] = "{0} Ly".format(Locale.string_from_number(distance, 2))
+                distance = self.calculate_distance(system["x"], system["y"], system["z"], *self.coordinates)
+                self.distance_labels[i][1]["text"] = "{0} Ly".format(Locale.string_from_number(distance, 2))
 
-        _, distance = self.travelledLabels[0]
-        distance["text"] = "{0} Ly".format(Locale.string_from_number(self.distanceTotal, 2))
-        _, distance = self.travelledLabels[1]
-        distance["text"] = "{0} Ly".format(Locale.string_from_number(self.distanceSession, 2))
+        _, distance = self.travelled_labels[0]
+        distance["text"] = "{0} Ly".format(Locale.string_from_number(self.distance_total, 2))
+        _, distance = self.travelled_labels[1]
+        distance["text"] = "{0} Ly".format(Locale.string_from_number(self.distance_session, 2))
     # endregion
 
     # region EDSM
-    def getSystemInformationFromEDSM(self, buttonNumber, systemName):
+    def get_system_information_from_edsm(self, button_number: int, system_name: str):
         # Don't access UI elements from here because of thread safety. Use the regular (int, str, bool) variables and fire an event
-        settingsUiElements = self.settingsUiElements[buttonNumber]
-        settingsUiElements.resetResponseData()
+        settings_ui_elements = self.settings_ui_elements[button_number]
+        settings_ui_elements.reset_response_data()
 
-        edsmUrl = "https://www.edsm.net/api-v1/system?systemName={SYSTEM}&showCoordinates=1".format(SYSTEM=parse.quote(systemName))
+        edsmUrl = "https://www.edsm.net/api-v1/system?systemName={SYSTEM}&showCoordinates=1".format(SYSTEM=parse.quote(system_name))
         try:
             url = request.urlopen(edsmUrl, timeout=15)
             response = url.read()
-            edsmJson = json.loads(response)
-            if "name" in edsmJson and "coords" in edsmJson:
-                settingsUiElements.success = True
-                settingsUiElements.systemName = edsmJson["name"]
-                settingsUiElements.x = edsmJson["coords"]["x"]
-                settingsUiElements.y = edsmJson["coords"]["y"]
-                settingsUiElements.z = edsmJson["coords"]["z"]
-                settingsUiElements.statusText = f"Coordinates filled in for system {edsmJson['name']}"
+            edsm_json = json.loads(response)
+            if "name" in edsm_json and "coords" in edsm_json:
+                settings_ui_elements.success = True
+                settings_ui_elements.system_name = edsm_json["name"]
+                settings_ui_elements.x = edsm_json["coords"]["x"]
+                settings_ui_elements.y = edsm_json["coords"]["y"]
+                settings_ui_elements.z = edsm_json["coords"]["z"]
+                settings_ui_elements.status_text = f"Coordinates filled in for system {edsm_json['name']}"
             else:
-                settingsUiElements.statusText = f"Could not get system information for {systemName} from EDSM"
+                settings_ui_elements.status_text = f"Could not get system information for {system_name} from EDSM"
         except:
-            settingsUiElements.statusText = f"Could not get system information for {systemName} from EDSM"
-            logger.error(f"Could not get system information for {systemName} from EDSM")
+            settings_ui_elements.status_text = f"Could not get system information for {system_name} from EDSM"
+            logger.error(f"Could not get system information for {system_name} from EDSM")
         finally:
-            settingsUiElements.hasData = True
+            settings_ui_elements.has_data = True
             if self.prefs_frame:
                 self.prefs_frame.event_generate(DistanceCalc.EVENT_EDSM_RESPONSE, when="tail")
 
-    def fillSystemInformationFromEdsmAsync(self, buttonNumber, systemEntry):
-        if systemEntry.get() == "":
-            self.errorLabel["text"] = "No system name provided."
-            self.errorLabel.config(foreground="red")
+    def fill_system_information_from_edsm_async(self, button_number: int, system_entry: nb.Entry):
+        if system_entry.get() == "":
+            self.error_label["text"] = "No system name provided."
+            self.error_label.config(foreground="red")
         else:
-            self.settingsUiElements[buttonNumber].edsmButton["state"] = tk.DISABLED
-            t = Thread(name="EDSM_caller_{0}".format(buttonNumber), target=self.getSystemInformationFromEDSM, args=(buttonNumber, systemEntry.get()))
+            self.settings_ui_elements[button_number].edsm_button["state"] = tk.DISABLED
+            t = Thread(name="EDSM_caller_{0}".format(button_number), target=self.get_system_information_from_edsm, args=(button_number, system_entry.get()))
             t.start()
     # endregion
 
-    def resetTotalTravelledDistance(self):
+    def reset_total_travelled_distance(self):
         config.set("DistanceCalc_travelled", 0)
-        self.distanceTotal = 0.0
+        self.distance_total = 0.0
 
 
 """
