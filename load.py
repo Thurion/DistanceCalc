@@ -109,15 +109,15 @@ class DistanceCalc(object):
         if type(x) == str:
             xEntry.insert(0, x)
         else:
-            xEntry.insert(0, Locale.stringFromNumber(x))
+            xEntry.insert(0, Locale.string_from_number(x, 3))
         if type(y) == str:
             yEntry.insert(0, y)
         else:
-            yEntry.insert(0, Locale.stringFromNumber(y))
+            yEntry.insert(0, Locale.string_from_number(y, 3))
         if type(z) == str:
             zEntry.insert(0, z)
         else:
-            zEntry.insert(0, Locale.stringFromNumber(z))
+            zEntry.insert(0, Locale.string_from_number(z, 3))
 
     @staticmethod
     def validate(action, index, value_if_allowed, prior_value, text, validation_type, trigger_type, widget_name):
@@ -125,7 +125,7 @@ class DistanceCalc(object):
             return True
         elif text in "0123456789.," or text == value_if_allowed:
             try:
-                t = type(Locale.numberFromString(value_if_allowed))
+                t = type(Locale.number_from_string(value_if_allowed))
                 if t is float or t is int:
                     return True
             except ValueError:
@@ -298,12 +298,13 @@ class DistanceCalc(object):
             zText = settingsUiElement.zEntry.get()
             if systemText and xText and yText and zText:
                 try:
-                    d = dict()
-                    d["system"] = systemText.strip()
-                    d["x"] = Locale.numberFromString(xText.strip())
-                    d["y"] = Locale.numberFromString(yText.strip())
-                    d["z"] = Locale.numberFromString(zText.strip())
-                    distances.append(d)
+                    distances.append({
+                        "system": systemText.strip(),
+                        "x": Locale.number_from_string(xText.strip()),
+                        "y": Locale.number_from_string(yText.strip()),
+                        "z": Locale.number_from_string(zText.strip())
+                    })
+
                 except Exception as e:  # error while parsing the numbers
                     logger.exception(f"DistanceCalc: Error while parsing the coordinates for {systemText.strip()}")
                     continue
@@ -389,7 +390,7 @@ class DistanceCalc(object):
                 description.grid(row=row, column=0, sticky=tk.W)
                 description["text"] = "Travelled ({0}):".format("total" if i == 0 else "session")
                 distance.grid(row=row, column=1, sticky=tk.W)
-                distance["text"] = "{0} Ly".format(Locale.stringFromNumber(self.distanceTotal, 2) if i == 0 else Locale.stringFromNumber(self.distanceSession, 2))
+                distance["text"] = "{0} Ly".format(Locale.string_from_number(self.distanceTotal, 2) if i == 0 else Locale.string_from_number(self.distanceSession, 2))
                 row += 1
             else:
                 description.grid_remove()
@@ -406,9 +407,9 @@ class DistanceCalc(object):
                 if settingsUiElement.success:
                     self.clearInputFields(i)
                     settingsUiElement.systemEntry.insert(0, settingsUiElement.systemName)
-                    settingsUiElement.xEntry.insert(0, Locale.stringFromNumber(settingsUiElement.x))
-                    settingsUiElement.yEntry.insert(0, Locale.stringFromNumber(settingsUiElement.y))
-                    settingsUiElement.zEntry.insert(0, Locale.stringFromNumber(settingsUiElement.z))
+                    settingsUiElement.xEntry.insert(0, Locale.string_from_number(settingsUiElement.x))
+                    settingsUiElement.yEntry.insert(0, Locale.string_from_number(settingsUiElement.y))
+                    settingsUiElement.zEntry.insert(0, Locale.string_from_number(settingsUiElement.z))
                     self.errorLabel["text"] = settingsUiElement.statusText
                     self.errorLabel.config(foreground="dark green")
                 else:
@@ -434,12 +435,12 @@ class DistanceCalc(object):
             for i in range(len(self.distances)):
                 system = self.distances[i]
                 distance = self.calculateDistance(system["x"], system["y"], system["z"], *self.coordinates)
-                self.distanceLabels[i][1]["text"] = "{0} Ly".format(Locale.stringFromNumber(distance, 2))
+                self.distanceLabels[i][1]["text"] = "{0} Ly".format(Locale.string_from_number(distance, 2))
 
         _, distance = self.travelledLabels[0]
-        distance["text"] = "{0} Ly".format(Locale.stringFromNumber(self.distanceTotal, 2))
+        distance["text"] = "{0} Ly".format(Locale.string_from_number(self.distanceTotal, 2))
         _, distance = self.travelledLabels[1]
-        distance["text"] = "{0} Ly".format(Locale.stringFromNumber(self.distanceSession, 2))
+        distance["text"] = "{0} Ly".format(Locale.string_from_number(self.distanceSession, 2))
     # endregion
 
     # region EDSM
