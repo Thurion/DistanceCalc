@@ -57,7 +57,7 @@ if not logger.hasHandlers():
 
 
 class SettingsUiElements(object):
-    def __init__(self, system_entry: nb.Entry, x_entry: nb.Entry, y_entry: nb.Entry, z_entry: nb.Entry,
+    def __init__(self, system_entry: nb.EntryMenu, x_entry: nb.EntryMenu, y_entry: nb.EntryMenu, z_entry: nb.EntryMenu,
                  edsm_button: nb.Button, has_data: bool = False, success: bool = False,
                  x: Union[float, int] = 0, y: Union[float, int] = 0, z: Union[float, int] = 0,
                  system_name: str = "", error_text: str = ""):
@@ -108,7 +108,7 @@ class DistanceCalc(object):
     # region static and helper methods
     @staticmethod
     def fill_entries(system_name: str, x: Union[str, int, float], y: Union[str, int, float], z: Union[str, int, float],
-                     system_entry: nb.Entry, x_entry: nb.Entry, y_entry: nb.Entry, z_entry: nb.Entry):
+                     system_entry: nb.EntryMenu, x_entry: nb.EntryMenu, y_entry: nb.EntryMenu, z_entry: nb.EntryMenu):
         system_entry.insert(0, system_name)
         if type(x) == str:
             x_entry.insert(0, x)
@@ -209,19 +209,19 @@ class DistanceCalc(object):
             if i == this.NUMBER_OF_SYSTEMS - 1:
                 down_button["state"] = tk.DISABLED
 
-            system_entry = nb.Entry(frame_top)
+            system_entry = nb.EntryMenu(frame_top)
             system_entry.grid(row=row_top, column=2, padx=this.PADX, sticky=tk.W)
             system_entry.config(width=this.WIDTH * 4)  # set fixed width. columnconfigure doesn't work because it already fits
 
-            x_entry = nb.Entry(frame_top, validate='key', validatecommand=vcmd)
+            x_entry = nb.EntryMenu(frame_top, validate='key', validatecommand=vcmd)
             x_entry.grid(row=row_top, column=3, padx=this.PADX, sticky=tk.W)
             x_entry.config(width=this.WIDTH)  # set fixed width. columnconfigure doesn't work because it already fits
 
-            y_entry = nb.Entry(frame_top, validate='key', validatecommand=vcmd)
+            y_entry = nb.EntryMenu(frame_top, validate='key', validatecommand=vcmd)
             y_entry.grid(row=row_top, column=4, padx=this.PADX, sticky=tk.W)
             y_entry.config(width=this.WIDTH)  # set fixed width. columnconfigure doesn't work because it already fits
 
-            z_entry = nb.Entry(frame_top, validate='key', validatecommand=vcmd)
+            z_entry = nb.EntryMenu(frame_top, validate='key', validatecommand=vcmd)
             z_entry.grid(row=row_top, column=5, padx=this.PADX, sticky=tk.W)
             z_entry.config(width=this.WIDTH)  # set fixed width. columnconfigure doesn't work because it already fits
 
@@ -475,7 +475,7 @@ class DistanceCalc(object):
             if self.prefs_frame:
                 self.prefs_frame.event_generate(DistanceCalc.EVENT_EDSM_RESPONSE, when="tail")
 
-    def fill_system_information_from_edsm_async(self, button_number: int, system_entry: nb.Entry):
+    def fill_system_information_from_edsm_async(self, button_number: int, system_entry: nb.EntryMenu):
         if system_entry.get() == "":
             self.error_label["text"] = "No system name provided."
             self.error_label.config(foreground="red")
